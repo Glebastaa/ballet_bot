@@ -1,0 +1,30 @@
+version: '3.8'
+
+volumes:
+  pgadmin_data_ballet:
+  pg_data_ballet:
+
+services:
+  db:
+    container_name: ballet_db_container
+    image: postgres:13
+    env_file: .env
+    restart: always
+    ports:
+      - '5434:5432'
+    volumes:
+      - pg_data_ballet:/var/lib/postgresql/data
+
+  pgadmin:
+    container_name: ballet_pgadmin_container
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ballet@ballet.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - '5051:80'
+    depends_on:
+      - db
+    volumes:
+      - pgadmin_data_ballet:/var/lib/pgadmin
