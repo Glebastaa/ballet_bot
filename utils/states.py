@@ -1,0 +1,12 @@
+from aiogram.fsm.state import StatesGroup, State
+
+
+class Studio(StatesGroup):
+    name = State()
+
+
+class Group(StatesGroup):
+    name = State()
+    studio_name = State()
+    start_date = State()
+    start_time = State()
