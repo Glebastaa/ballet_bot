@@ -38,6 +38,7 @@ async def get_studios() -> list[Studio]:
     stmt = select(Studio).order_by(Studio.id)
     async with async_session_maker() as session:
         studios = await session.execute(stmt)
+        await session.refresh(studios)
         return studios.scalars().all()
 
 
