@@ -19,10 +19,12 @@ class Studio(Base):
 
     groups: Mapped[list['Group']] = relationship(
         back_populates='studio',
-        lazy='selectin'
+        lazy='selectin',
+        cascade='all, delete'
     )
     individual_lesson: Mapped['IndividualLesson'] = relationship(
-        back_populates='studio'
+        back_populates='studio',
+        cascade='all, delete'
     )
 
 
@@ -41,7 +43,7 @@ class Schedule(Base):
 
     id: Mapped[intpk]
     group_id: Mapped[int] = mapped_column(
-        ForeignKey('groups.id', ondelete='CASCADE')
+        ForeignKey('groups.id')
     )
     start_time: Mapped[time]
     start_date: Mapped[WeekDays]
@@ -55,11 +57,14 @@ class Group(Base):
     id: Mapped[intpk]
     name: Mapped[str]
     studio_id: Mapped[int] = mapped_column(
-        ForeignKey('studios.id', ondelete='CASCADE')
+        ForeignKey('studios.id')
     )
 
     studio: Mapped['Studio'] = relationship(back_populates='groups')
-    schedules: Mapped[list['Schedule']] = relationship(back_populates='group')
+    schedules: Mapped[list['Schedule']] = relationship(
+        back_populates='group',
+        cascade='all, delete'
+    )
     students: Mapped[list['Student']] = relationship(
         secondary='student_group_association',
         back_populates='groups'
@@ -92,7 +97,7 @@ class IndividualLesson(Base):
     start_time: Mapped[time]
     start_date: Mapped[WeekDays]
     studio_id: Mapped[int] = mapped_column(
-        ForeignKey('studios.id', ondelete='CASCADE')
+        ForeignKey('studios.id')
     )
 
     students: Mapped[list['Student']] = relationship(
