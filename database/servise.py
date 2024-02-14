@@ -36,15 +36,9 @@ async def get_studios(session: AsyncSession) -> list[Studio]:
     """Get studios."""
 
     stmt = select(Studio).order_by(Studio.id)
-<<<<<<< HEAD
     studios = await session.execute(stmt)
     return studios.scalars().all()
-=======
-    async with async_session_maker() as session:
-        studios = await session.execute(stmt)
-        await session.refresh(studios)
-        return studios.scalars().all()
->>>>>>> 0be1bad (Какая-то чухня)
+
 
 
 async def edit_studio(
