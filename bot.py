@@ -1,22 +1,21 @@
 import asyncio
-from aiogram import Bot, Dispatcher
 import logging
 
 from handlers import bot_messages, commands, questions
-
-from config import config
-
-logging.basicConfig(level=logging.INFO)
+from callbacks import callbacks
+from aiogram import Bot, Dispatcher
+from config import settings
 
 
 # Запуск бота
 async def main():
-    bot = Bot(config.bot_token.get_secret_value())
+    bot = Bot(settings.bot_token.get_secret_value())
     dp = Dispatcher()
 
     dp.include_routers(
         commands.router,
         bot_messages.router,
+        callbacks.router,
         questions.router,
     )
 
@@ -25,4 +24,8 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    logging.basicConfig(level=logging.INFO)
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("ТЫ БЛЯТЬ ВЫШЕЛ")
