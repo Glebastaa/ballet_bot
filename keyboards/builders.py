@@ -1,10 +1,19 @@
-from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from database.servise import get_studios
+from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton
 
 
-def add_group(text: str | list):
-    builder = ReplyKeyboardBuilder()
-    if isinstance(text, str):
-        text = [text]
+async def get_studios_kb():
+    studios_kb = InlineKeyboardBuilder()
+    studios = await get_studios()
+    for studio in studios:
+        studios_kb.add(InlineKeyboardButton(text=studio.name, callback_data=f"show_studio_{studio.name}"))
+    return studios_kb.adjust(2).as_markup()
 
-    [builder.button(text=txt) for txt in text]
-    return builder.as_markup(resize_keyboard=True, one_time_keyboard=True)
+
+async def delete_studios_kb():
+    studios_kb = InlineKeyboardBuilder()
+    studios = await get_studios()
+    for studio in studios:
+        studios_kb.add(InlineKeyboardButton(text=studio.name, callback_data=f"delete_studio_{studio.name}"))
+    return studios_kb.adjust(2).as_markup()
