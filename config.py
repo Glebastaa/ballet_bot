@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import SecretStr
+=======
+from pydantic import SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
+>>>>>>> 0be1bad (Какая-то чухня)
 
 
 class EnvBaseSettings(BaseSettings):
@@ -16,6 +21,11 @@ class DBSettings(EnvBaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
+<<<<<<< HEAD
+=======
+
+    bot_token: SecretStr
+>>>>>>> 0be1bad (Какая-то чухня)
 
     @property
     def DATABASE_url_asyncpg(self) -> str:
@@ -26,8 +36,11 @@ class BotSettings(EnvBaseSettings):
     bot_token: SecretStr
 
 
+<<<<<<< HEAD
 class Settings(DBSettings, BotSettings):
     DEBUG: bool = True
 
 
+=======
+>>>>>>> 0be1bad (Какая-то чухня)
 settings = Settings()
