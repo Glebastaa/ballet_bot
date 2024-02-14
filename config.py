@@ -1,21 +1,33 @@
-from pydantic_settings import BaseSettings, SecretStr, SettingsConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import SecretStr
 
 
-class Settings(BaseSettings):
+class EnvBaseSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file='.env',
+        extra='ignore',
+        env_file_encoding='utf-8'
+    )
+
+
+class DBSettings(EnvBaseSettings):
     DB_HOST: str
     DB_PORT: int
-
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
-      
-    bot_token: SecretStr
 
     @property
-    def DATABASE_url_asyncpg(self):
+    def DATABASE_url_asyncpg(self) -> str:
         return f'postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.POSTGRES_DB}'
 
-    model_config = SettingsConfigDict(env_file='.env')
+
+class BotSettings(EnvBaseSettings):
+    bot_token: SecretStr
+
+
+class Settings(DBSettings, BotSettings):
+    DEBUG: bool = True
 
 
 settings = Settings()

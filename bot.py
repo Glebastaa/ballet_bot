@@ -4,14 +4,14 @@ import logging
 
 from handlers import bot_messages, commands, questions
 
-from config import config
+from config import settings
 
 logging.basicConfig(level=logging.INFO)
 
 
 # Запуск бота
 async def main():
-    bot = Bot(config.bot_token.get_secret_value())
+    bot = Bot(settings.bot_token.get_secret_value())
     dp = Dispatcher()
 
     dp.include_routers(

@@ -17,7 +17,10 @@ class Studio(Base):
     id: Mapped[intpk]
     name: Mapped[str]
 
-    groups: Mapped[list['Group']] = relationship(back_populates='studio')
+    groups: Mapped[list['Group']] = relationship(
+        back_populates='studio',
+        lazy='selectin'
+    )
     individual_lesson: Mapped['IndividualLesson'] = relationship(
         back_populates='studio'
     )
@@ -37,7 +40,9 @@ class Schedule(Base):
     __tablename__ = 'schedules'
 
     id: Mapped[intpk]
-    group_id: Mapped[int] = mapped_column(ForeignKey('groups.id'))
+    group_id: Mapped[int] = mapped_column(
+        ForeignKey('groups.id', ondelete='CASCADE')
+    )
     start_time: Mapped[time]
     start_date: Mapped[WeekDays]
 
@@ -49,7 +54,9 @@ class Group(Base):
 
     id: Mapped[intpk]
     name: Mapped[str]
-    studio_id: Mapped[int] = mapped_column(ForeignKey('studios.id'))
+    studio_id: Mapped[int] = mapped_column(
+        ForeignKey('studios.id', ondelete='CASCADE')
+    )
 
     studio: Mapped['Studio'] = relationship(back_populates='groups')
     schedules: Mapped[list['Schedule']] = relationship(back_populates='group')
@@ -84,7 +91,9 @@ class IndividualLesson(Base):
     id: Mapped[intpk]
     start_time: Mapped[time]
     start_date: Mapped[WeekDays]
-    studio_id: Mapped[int] = mapped_column(ForeignKey('studios.id'))
+    studio_id: Mapped[int] = mapped_column(
+        ForeignKey('studios.id', ondelete='CASCADE')
+    )
 
     students: Mapped[list['Student']] = relationship(
         back_populates='individual_lesson'
@@ -96,7 +105,15 @@ student_group_association = Table(
     'student_group_association',
     Base.metadata,
     Column('id', Integer, primary_key=True),
-    Column('group_id', ForeignKey('groups.id'), nullable=False),
-    Column('student_id', ForeignKey('students.id'), nullable=False),
+    Column(
+        'group_id',
+        ForeignKey('groups.id', ondelete='CASCADE'),
+        nullable=False
+    ),
+    Column(
+        'student_id',
+        ForeignKey('students.id', ondelete='CASCADE'),
+        nullable=False
+    ),
     UniqueConstraint('group_id', 'student_id', name='idx_unique_group_student')
 )
