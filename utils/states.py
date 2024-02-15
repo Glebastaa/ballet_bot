@@ -10,3 +10,7 @@ class Group(StatesGroup):
     studio_name = State()
     start_date = State()
     start_time = State()
+
+
+class EditStudio(StatesGroup):
+    new_studio_name = State()

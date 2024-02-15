@@ -47,3 +47,18 @@ main_delete = ReplyKeyboardMarkup(
     one_time_keyboard=True,
     input_field_placeholder="Выберите кнопку из меню",
 )
+
+main_edit = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton(text="Изменить имя студии"),
+            KeyboardButton(text="Изменить имя группы"),
+        ],
+        [
+            KeyboardButton(text="Изменить имя ученика"),
+        ]
+    ],
+    resize_keyboard=True,
+    one_time_keyboard=True,
+    input_field_placeholder="Выберите кнопку из меню",
+)

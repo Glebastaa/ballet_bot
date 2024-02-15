@@ -3,6 +3,7 @@ import logging
 
 from handlers import bot_messages, commands, questions
 from callbacks import callbacks
+from middlewares.database import DatabaseMiddleware
 from aiogram import Bot, Dispatcher
 from config import settings
 
@@ -11,12 +12,13 @@ from config import settings
 async def main():
     bot = Bot(settings.bot_token.get_secret_value())
     dp = Dispatcher()
+    dp.update.middleware(DatabaseMiddleware())
 
     dp.include_routers(
         commands.router,
         bot_messages.router,
-        callbacks.router,
         questions.router,
+        callbacks.router,
     )
 
     await bot.delete_webhook(drop_pending_updates=True)

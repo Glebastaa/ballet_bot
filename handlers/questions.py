@@ -3,6 +3,7 @@ from aiogram.types import Message
 from aiogram import Router, F
 from utils.states import Studio
 from database.servise import add_studio
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = Router()
 
@@ -10,14 +11,14 @@ router = Router()
 @router.message(F.text.lower() == "добавить студию")
 async def form_add_studio(message: Message, state: FSMContext):
     await state.set_state(Studio.name)
-    await message.answer("Введите название студии")
+    await message.answer("Введите название студии:")
 
 
 @router.message(Studio.name)
-async def form_name_studio(message: Message, state: FSMContext):
+async def form_name_studio(message: Message, state: FSMContext, session: AsyncSession):
     await state.update_data(name=message.text)
     studio_name = message.text
-    result = await add_studio(studio_name)
+    result = await add_studio(session, studio_name)
     if result:
         await message.answer(f"Студия {studio_name} уже существует или произошла ошибка")
     else:
