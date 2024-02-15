@@ -26,3 +26,11 @@ async def edit_studios_kb(session: AsyncSession):
     for studio in studios:
         studios_kb.add(InlineKeyboardButton(text=studio.name, callback_data=f"edit_studio_{studio.name}"))
     return studios_kb.adjust(2).as_markup()
+
+
+async def get_studios_for_group_kb(session: AsyncSession):
+    studios_kb = InlineKeyboardBuilder()
+    studios = await get_studios(session)
+    for studio in studios:
+        studios_kb.add(InlineKeyboardButton(text=studio.name, callback_data=f"select_studio_{studio.name}"))
+    return studios_kb.adjust(2).as_markup()
