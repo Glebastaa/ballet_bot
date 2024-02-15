@@ -56,13 +56,12 @@ async def edit_studio(
     return studio
 
 
-async def delete_studio(session: AsyncSession, studio_name: str) -> str:
+async def delete_studio(session: AsyncSession, studio: Studio) -> str:
     "Delete the studio."
 
-    studio = await get_by_name(Studio, studio_name, session)
     await session.delete(studio)
     await session.commit()
-    return studio_name
+    return studio.name
 
 
 # Groups.

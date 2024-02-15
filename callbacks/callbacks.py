@@ -1,9 +1,13 @@
+from tokenize import group
 from aiogram.types import CallbackQuery, Message
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram import F, Router
 from sqlalchemy.ext.asyncio import AsyncSession
+from aiogram.fsm.context import FSMContext
+from database.models import Studio
+from utils.states import Group
 
-from database.servise import delete_studio, edit_studio
+from database.servise import delete_studio, edit_studio, get_by_name
 
 router = Router()
 user_state = {}
@@ -28,8 +32,10 @@ async def select_studio(callback: CallbackQuery):
 @router.callback_query(F.data.startswith("delete_studio_"))
 async def call_delete_studio(callback: CallbackQuery, session: AsyncSession):
     studio_name = callback.data.split("_")[2]
-    result = await delete_studio(session, studio_name)
-    if result:
+    studio = await get_by_name(Studio, studio_name, session)
+    if studio:
+        await delete_studio(session, studio)
+
         await callback.message.answer(f"Студия {studio_name} успешно удалена")
     else:
         await callback.message.answer(f"Студию {studio_name} не смогли удалить или она не существует")
@@ -55,3 +61,13 @@ async def message_handler(message: Message, session: AsyncSession):
             await message.answer(f"Студию {studio_name} не удалось изменить или она не существует")
 
         del user_state[user_id]
+
+
+@router.callback_query(F.data.startswith("select_studio_"))
+async def select_studio_for_group(callback: CallbackQuery, state: FSMContext):
+    studio_name = callback.data.split("_")[2]
+    await state.update_data(studio_name=studio_name)
+    data = await state.get_data()
+    group_name = data.get("group_name")
+    await state.set_state(Group.start_date)
+    await callback.message.answer(f"Введите день недели занятия для группы {group_name}")

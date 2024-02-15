@@ -6,7 +6,7 @@ class Studio(StatesGroup):
 
 
 class Group(StatesGroup):
-    name = State()
+    group_name = State()
     studio_name = State()
     start_date = State()
     start_time = State()

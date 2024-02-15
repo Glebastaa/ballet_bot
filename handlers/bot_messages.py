@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from keyboards import builders
 from sqlalchemy.ext.asyncio import AsyncSession
-from utils.states import Studio
+from utils.states import Studio, Group
 
 
 router = Router()
@@ -36,3 +36,9 @@ async def form_change_name_studio(message: Message, session: AsyncSession):
         "Выберите студию для изменения имени:",
         reply_markup=await builders.edit_studios_kb(session=session)
     )
+
+
+@router.message(F.text.lower() == "добавить группу")
+async def form_add_group(message: Message, state: FSMContext):
+    await state.set_state(Group.group_name)
+    await message.answer("Введите название группы:")
