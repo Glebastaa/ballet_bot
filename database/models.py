@@ -17,7 +17,6 @@ class Studio(Base):
 
     id: Mapped[intpk]
     name: Mapped[str] = mapped_column(String(50), unique=True)
-    notes: Mapped[str | None]
 
     groups: Mapped[list['Group']] = relationship(
         back_populates='studio',
