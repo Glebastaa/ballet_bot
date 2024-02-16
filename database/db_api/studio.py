@@ -27,12 +27,12 @@ async def get_studios(session: AsyncSession) -> list[Studio]:
 
 async def edit_studio(
         session: AsyncSession,
-        studio_name: str,
+        studio_id: int,
         new_studio_name: str
 ) -> Studio:
     """Change studio's name."""
 
-    studio = await get_by_name(Studio, studio_name, session)
+    studio = await session.get(Studio, studio_id)
     if not studio:
         raise DoesNotExist
     studio.name = new_studio_name
@@ -40,9 +40,10 @@ async def edit_studio(
     return studio
 
 
-async def delete_studio(session: AsyncSession, studio: Studio) -> str:
+async def delete_studio(session: AsyncSession, studio_id: int) -> str:
     "Delete the studio."
 
+    studio = await session.get(Studio, studio_id)
     await session.delete(studio)
     await session.commit()
     return studio.name

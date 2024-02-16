@@ -10,7 +10,7 @@ from exceptions import DoesNotExist, EntityAlreadyExists
 async def add_group(
         session: AsyncSession,
         group_name: str,
-        studio_name: str,
+        studio_id: int,
         start_time: time,
         start_date: WeekDays
 ) -> Group:
@@ -18,9 +18,7 @@ async def add_group(
 
     if await get_by_name(Group, group_name, session):
         raise EntityAlreadyExists
-    studio = await get_by_name(Studio, studio_name, session)
-    if not studio:
-        raise DoesNotExist
+    studio = await session.get(Studio, studio_id)
     group = Group(name=group_name, studio_id=studio.id)
     session.add(group)
     await session.flush()
@@ -33,28 +31,21 @@ async def add_group(
     await session.commit()
 
 
-async def get_groups(session: AsyncSession, studio_name: str) -> list[Group]:
+async def get_groups(session: AsyncSession, studio_id: int) -> list[Group]:
     "Get list of groups."
 
-    studio = await get_by_name(Studio, studio_name, session)
-    if not studio:
-        raise DoesNotExist
+    studio = await session.get(Studio, studio_id)
     return studio.groups
 
 
 async def edit_group(
         session: AsyncSession,
-        group_name: str,
-        new_group_name: str,
-        studio_name: str
+        group_id: int,
+        new_group_name: str
 ) -> Group:
     """Edit group."""
 
-    group = await get_group_by_name_and_studio(
-        session,
-        group_name,
-        studio_name
-    )
+    group = session.get(Group, group_id)
     group.name = new_group_name
     await session.commit()
     return group
@@ -62,50 +53,35 @@ async def edit_group(
 
 async def delete_group(
         session: AsyncSession,
-        group_name: str,
-        studio_name: str
+        group_id: int
 ) -> str:
     """Delete group."""
 
-    group = await get_group_by_name_and_studio(
-        session,
-        group_name,
-        studio_name
-    )
+    group = session.get(Group, group_id)
     await session.delete(group)
     await session.commit()
-    return group_name
+    return group.name
 
 
 async def get_date_time_group(
         session: AsyncSession,
-        group_name: str,
-        studio_name: str
+        group_id: int
 ):
     """Get datetime."""
 
-    group = await get_group_by_name_and_studio(
-        session,
-        group_name,
-        studio_name
-    )
+    group = session.get(Group, group_id)
     schedule = await get_schedule(session, group)
     return [schedule.start_date.value, schedule.start_time.strftime('%H:%M')]
 
 
 async def edit_date_group(
         session: AsyncSession,
-        group_name: str,
-        studio_name: str,
+        group_id: int,
         new_date: WeekDays
 ) -> Schedule:
     """Edit date."""
 
-    group = await get_group_by_name_and_studio(
-        session,
-        group_name,
-        studio_name
-    )
+    group = session.get(Group, group_id)
     schedule = await get_schedule(session, group)
     schedule.start_date = new_date
     await session.commit()
@@ -114,17 +90,12 @@ async def edit_date_group(
 
 async def edit_time_group(
         session: AsyncSession,
-        group_name: str,
-        studio_name: str,
+        group_id: int,
         new_time: time
 ) -> Schedule:
     """Edit time."""
 
-    group = await get_group_by_name_and_studio(
-        session,
-        group_name,
-        studio_name
-    )
+    group = session.get(Group, group_id)
     schedule = await get_schedule(session, group)
     schedule.start_time = new_time
     await session.commit()
