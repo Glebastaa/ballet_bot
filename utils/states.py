@@ -14,3 +14,9 @@ class Group(StatesGroup):
 
 class EditStudio(StatesGroup):
     new_studio_name = State()
+
+
+class EditGroup(StatesGroup):
+    group_name = State()
+    new_group_name = State()
+    studio_name = State()
