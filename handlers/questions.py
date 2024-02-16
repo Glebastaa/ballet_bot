@@ -1,11 +1,16 @@
-from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+import time
 from aiogram import Router
-from database.models import WeekDays
-from utils.states import Studio, Group
-from database.servise import add_studio, add_group
-from sqlalchemy.ext.asyncio import AsyncSession
+from aiogram.types import Message
+from aiogram.fsm.context import FSMContext
+
 from keyboards import builders
+from database.models import WeekDays
+from database.db_api.studio import add_studio
+from database.db_api.group import add_group, edit_group
+from utils.states import Studio, Group, EditGroup
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from datetime import datetime
 
 router = Router()
 
@@ -30,15 +35,6 @@ async def form_name_group(message: Message, state: FSMContext, session: AsyncSes
     await message.answer(f"Выберите студию для группы {group_name}", reply_markup=await builders.get_studios_for_group_kb(session=session))
 
 
-@router.message(Group.start_date)
-async def form_start_time_group(message: Message, state: FSMContext, session: AsyncSession):
-    await state.update_data(start_date=message.text)
-    data = await state.get_data()
-    group_name = data.get("group_name")
-    await state.set_state(Group.start_time)
-    await message.answer(f"Введите время начала занятия для группы {group_name}")
-
-
 @router.message(Group.start_time)
 async def form_end_add_group(message: Message, state: FSMContext, session: AsyncSession):
     await state.update_data(start_time=message.text)
@@ -47,10 +43,19 @@ async def form_end_add_group(message: Message, state: FSMContext, session: Async
     studio_name = data.get("studio_name")
     start_date = data.get("start_date")
     start_time_str = message.text
-    start_time = # тут чето преобразовать как-то надэ
-    result = await add_group(session, group_name, studio_name, start_time, WeekDays.friday)
-    if result:
-        await message.answer(f"Группа {group_name} успешно добавлена в студию {studio_name} с временем начала в {start_date} : {start_time}")
-    else:
-        await message.answer(f"Группа {group_name} уже существует или произошла ошибка")
+    start_time = datetime.strptime(start_time_str, "%H:%M").time()
+    await add_group(session, group_name, studio_name, start_time, start_date)
+    await message.answer(f"Группа {group_name} успешно добавлена в студию {studio_name} с временем начала в {start_date} : {start_time}")
+    await state.clear()
+
+
+@router.message(EditGroup.new_group_name)
+async def form_new_group_name(message: Message, state: FSMContext, session: AsyncSession):
+    await state.update_data(new_group_name=message.text)
+    data = await state.get_data()
+    group_name = data.get("group_name")
+    new_group_name = data.get("new_group_name")
+    studio_name = data.get("studio_name")
+    await edit_group(session, group_name, new_group_name, studio_name)
+    await message.answer(f"Группа {group_name} успешно изменена на {new_group_name}")
     await state.clear()

@@ -20,10 +20,10 @@ main_info = ReplyKeyboardMarkup(
     keyboard=[
         [
             KeyboardButton(text="Список студий"),
-            KeyboardButton(text="Список групп в выбранной студии"),
+            KeyboardButton(text="Список групп"),
         ],
         [
-            KeyboardButton(text="Список учеников в выбранной группе"),
+            KeyboardButton(text="Список учеников"),
             KeyboardButton(text="Хз-хз"),
         ]
     ],

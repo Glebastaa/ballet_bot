@@ -42,3 +42,11 @@ async def form_change_name_studio(message: Message, session: AsyncSession):
 async def form_add_group(message: Message, state: FSMContext):
     await state.set_state(Group.group_name)
     await message.answer("Введите название группы:")
+
+
+@router.message(F.text.lower() == "список групп")
+async def message_list_groups(message: Message, session: AsyncSession):
+    await message.answer(
+        "Выберите студию, в которой хотите просмотреть группы",
+        reply_markup=await builders.get_studios_for_group(session=session)
+    )
