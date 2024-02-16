@@ -2,20 +2,22 @@ from datetime import time
 from enum import Enum
 from typing import Annotated
 
-from sqlalchemy import Column, ForeignKey, Integer, Table, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, Integer, String, Table, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.db import Base
 
 
 intpk = Annotated[int, mapped_column(primary_key=True)]
+NameStr = Annotated[str, mapped_column(String(50))]
 
 
 class Studio(Base):
     __tablename__ = 'studios'
 
     id: Mapped[intpk]
-    name: Mapped[str]
+    name: Mapped[str] = mapped_column(String(50), unique=True)
+    notes: Mapped[str | None]
 
     groups: Mapped[list['Group']] = relationship(
         back_populates='studio',
@@ -55,7 +57,8 @@ class Group(Base):
     __tablename__ = 'groups'
 
     id: Mapped[intpk]
-    name: Mapped[str]
+    name: Mapped[NameStr]
+    notes: Mapped[str | None]
     studio_id: Mapped[int] = mapped_column(
         ForeignKey('studios.id')
     )
@@ -69,14 +72,15 @@ class Group(Base):
         secondary='student_group_association',
         back_populates='groups'
     )
+    UniqueConstraint('name', 'studio_id')
 
 
 class Student(Base):
     __tablename__ = 'students'
 
     id: Mapped[intpk]
-    name: Mapped[str]
-    age: Mapped[int]
+    name: Mapped[NameStr]
+    notes: Mapped[str | None]
     individual_lesson_id: Mapped[int | None] = mapped_column(
         ForeignKey('individual_lessons.id')
     )
@@ -120,5 +124,5 @@ student_group_association = Table(
         ForeignKey('students.id', ondelete='CASCADE'),
         nullable=False
     ),
-    UniqueConstraint('group_id', 'student_id', name='idx_unique_group_student')
+    UniqueConstraint('group_id', 'student_id')
 )
