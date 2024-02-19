@@ -45,7 +45,7 @@ async def edit_group(
 ) -> Group:
     """Edit group."""
 
-    group = session.get(Group, group_id)
+    group = await session.get(Group, group_id)
     group.name = new_group_name
     await session.commit()
     return group
@@ -57,7 +57,7 @@ async def delete_group(
 ) -> str:
     """Delete group."""
 
-    group = session.get(Group, group_id)
+    group = await session.get(Group, group_id)
     await session.delete(group)
     await session.commit()
     return group.name
@@ -69,7 +69,7 @@ async def get_date_time_group(
 ):
     """Get datetime."""
 
-    group = session.get(Group, group_id)
+    group = await session.get(Group, group_id)
     schedule = await get_schedule(session, group)
     return [schedule.start_date.value, schedule.start_time.strftime('%H:%M')]
 
@@ -81,7 +81,7 @@ async def edit_date_group(
 ) -> Schedule:
     """Edit date."""
 
-    group = session.get(Group, group_id)
+    group = await session.get(Group, group_id)
     schedule = await get_schedule(session, group)
     schedule.start_date = new_date
     await session.commit()
@@ -95,7 +95,7 @@ async def edit_time_group(
 ) -> Schedule:
     """Edit time."""
 
-    group = session.get(Group, group_id)
+    group = await session.get(Group, group_id)
     schedule = await get_schedule(session, group)
     schedule.start_time = new_time
     await session.commit()
