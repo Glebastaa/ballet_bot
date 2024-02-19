@@ -99,6 +99,7 @@ class IndividualLesson(Base):
     id: Mapped[intpk]
     start_time: Mapped[time]
     start_date: Mapped[WeekDays]
+    notes: Mapped[str | None]
     studio_id: Mapped[int] = mapped_column(
         ForeignKey('studios.id')
     )
