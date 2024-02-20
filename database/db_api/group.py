@@ -1,10 +1,10 @@
 from datetime import time
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from database.db_api.utils import get_by_name, get_group_by_name_and_studio, get_schedule
+from database.db_api.utils import get_schedule, group_not_in_studio
 
 from database.models import Group, Schedule, Studio, WeekDays
-from exceptions import DoesNotExist, EntityAlreadyExists
+from exceptions import EntityAlreadyExists
 
 
 async def add_group(
@@ -16,7 +16,7 @@ async def add_group(
 ) -> Group:
     "Add a new group."
 
-    if await get_by_name(Group, group_name, session):
+    if await group_not_in_studio(session, group_name, studio_id):
         raise EntityAlreadyExists
     studio = await session.get(Studio, studio_id)
     group = Group(name=group_name, studio_id=studio.id)
