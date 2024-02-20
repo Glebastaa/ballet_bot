@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import Group, Schedule, Studio
-from exceptions import DoesNotExist
+from exceptions import DoesNotExist, EntityAlreadyExists
 
 
 async def get_by_name(
@@ -19,21 +19,18 @@ async def get_by_name(
     return instance.scalar_one_or_none()
 
 
-async def get_group_by_name_and_studio(
+async def group_not_in_studio(
         session: AsyncSession,
         group_name: str,
-        studio_name: str
+        studio_id: int
 ) -> Group:
-    """Get specific group."""
+    """Group not in studio's group list."""
 
-    studio = await get_by_name(Studio, studio_name, session)
-    group = None
+    studio = await session.get(Studio, studio_id)
     for gr in studio.groups:
         if gr.name == group_name:
-            group = gr
-    if not group:
-        raise DoesNotExist
-    return group
+            raise EntityAlreadyExists
+    return None
 
 
 async def get_schedule(session: AsyncSession, group: Group) -> Schedule:
