@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from config import settings
-from database.db import Base, engine, async_session_maker
+from database.db import Base, async_session_maker
 from database.models import Student # noqa
 
 
