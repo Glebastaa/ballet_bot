@@ -2,10 +2,10 @@ import asyncio
 from typing import Generator
 import pytest
 
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from config import settings
-from database.db import Base, async_session_maker
+from database.db import Base
 from database.models import Student # noqa
 
 
@@ -19,7 +19,7 @@ def event_loop(request) -> Generator:  # noqa: indirect usage
     loop.close()
 
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture
 async def create_db():
     engine = create_async_engine(settings.DATABASE_url_asyncpg)
     print(f"{settings.DATABASE_url_asyncpg}")
@@ -27,10 +27,11 @@ async def create_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
-    print('end!!!!!!!!')
+    return engine
 
 
 @pytest.fixture
-async def session():
-    async with async_session_maker() as session:
+async def session(create_db):
+    sessionmaker = async_sessionmaker(create_db, expire_on_commit=False)
+    async with sessionmaker() as session:
         yield session

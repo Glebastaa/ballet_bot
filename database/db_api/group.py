@@ -11,24 +11,26 @@ async def add_group(
         session: AsyncSession,
         group_name: str,
         studio_id: int,
-        start_time: time,
-        start_date: WeekDays
+        start_time: time = None,
+        start_date: WeekDays = None
 ) -> Group:
     "Add a new group."
 
     if await group_not_in_studio(session, group_name, studio_id):
         raise EntityAlreadyExists
-    studio = await session.get(Studio, studio_id)
-    group = Group(name=group_name, studio_id=studio.id)
+    group = Group(name=group_name, studio_id=studio_id)
     session.add(group)
     await session.flush()
-    schedule = Schedule(
-        group_id=group.id,
-        start_time=start_time,
-        start_date=start_date
-    )
-    session.add(schedule)
+    if start_date and start_time:
+        await session.flush()
+        schedule = Schedule(
+            group_id=group.id,
+            start_time=start_time,
+            start_date=start_date
+        )
+        session.add(schedule)
     await session.commit()
+    return group
 
 
 async def get_groups(session: AsyncSession, studio_id: int) -> list[Group]:
