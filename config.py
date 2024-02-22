@@ -29,7 +29,7 @@ class BotSettings(EnvBaseSettings):
 
 
 class Settings(DBSettings, BotSettings):
-    DEBUG: bool = False
+    DEBUG: bool = True
 
 
 settings = Settings()

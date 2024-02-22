@@ -2,7 +2,14 @@ from datetime import time
 from enum import Enum
 from typing import Annotated
 
-from sqlalchemy import Column, ForeignKey, Integer, String, Table, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+    UniqueConstraint
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.db import Base

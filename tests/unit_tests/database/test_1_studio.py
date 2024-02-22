@@ -7,54 +7,43 @@ from database.models import Studio
 from exceptions import EntityAlreadyExists
 
 
+@pytest.mark.studio
 class TestStudio:
-    async def _get_by_name(self, session, name: str = None):
+    async def _get_by_name_or_all(self, session, name: str = None):
         stmt = select(Studio)
         if name:
             stmt = stmt.where(Studio.name == name)
         return await session.execute(stmt)
 
-    async def test_add_studio(self, session, first_studio):
-        await add_studio(session, first_studio)
+    async def test_add_studio(self, session):
+        await add_studio(session, 'Страна огня')
 
-        studio = await self._get_by_name(session, first_studio)
-        assert studio.scalar_one_or_none().name == first_studio
+        studio = await self._get_by_name_or_all(session, 'Страна огня')
+        assert studio.scalar_one_or_none().name == 'Страна огня'
 
-    async def test_add_dublicate_studio(self, session, first_studio):
+    async def test_add_dublicate_studio(self, session, studios):
         with pytest.raises(EntityAlreadyExists):
-            await add_studio(session, first_studio)
+            await add_studio(session, 'Страна огня')
 
-        studios = await self._get_by_name(session, first_studio)
-        assert len(studios.scalars().all()) == 1
+        studios = await self._get_by_name_or_all(session)
+        assert len(studios.scalars().all()) == 3
 
-    async def test_add_second_third_studios(self, session, second_studio):
-        await add_studio(session, second_studio)
-        await add_studio(session, 'Страна ветра')
-
-        studios = (await self._get_by_name(session)).scalars().all()
-        assert len(studios) == 3
-        assert studios[1].name == second_studio
-
-    async def test_get_studios(self, session, first_studio, second_studio):
+    async def test_get_studios(self, session, studios):
         studios = await get_studios(session)
 
+        name_list = ['Страна огня', 'Страна воды', 'Страна ветра']
+        studio_names = [studio.name for studio in studios]
+
         assert len(studios) == 3
-        assert studios[0].name == first_studio
-        assert studios[1].name == second_studio
+        assert set(name_list) == set(studio_names)
 
-    async def test_edit_studios(self, session, new_studio_data):
-        await edit_studio(session, *new_studio_data.values())
+    async def test_edit_studios(self, session, studios):
+        await edit_studio(session, 1, 'Яметте кудасай, ониии-чан!')
+        studio = await session.get(Studio, 1)
+        assert studio.name == 'Яметте кудасай, ониии-чан!'
 
-        studio = await self._get_by_name(session, new_studio_data['new_name'])
-        studio = studio.scalar_one_or_none()
+    async def test_delete_studio(self, session, studios):
+        await delete_studio(session, 1)
 
-        assert studio.name == new_studio_data['new_name']
-        assert studio.id == new_studio_data['id']
-
-    async def test_delete_studio(self, session, new_studio_data):
-        await delete_studio(session, new_studio_data['id'])
-
-        studio = await self._get_by_name(session, new_studio_data['new_name'])
-        studio = studio.scalar_one_or_none()
-
+        studio = await session.get(Studio, 1)
         assert studio is None
