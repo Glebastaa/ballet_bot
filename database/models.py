@@ -1,6 +1,7 @@
 from datetime import time
 from enum import Enum
 from typing import Annotated
+from pydantic import BaseModel
 
 from sqlalchemy import (
     Column,
@@ -13,6 +14,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.db import Base
+from schemas.group import GroupSchema
 
 
 intpk = Annotated[int, mapped_column(primary_key=True)]
@@ -58,6 +60,14 @@ class Schedule(Base):
 
     group: Mapped['Group'] = relationship(back_populates='schedules')
 
+    def to_read_model(self, schema: BaseModel) -> BaseModel:
+        return schema(
+            id=self.id,
+            group_id=self.group_id,
+            start_time=self.start_time,
+            start_date=self.start_date
+        )
+
 
 class Group(Base):
     __tablename__ = 'groups'
@@ -80,6 +90,14 @@ class Group(Base):
     )
     UniqueConstraint('name', 'studio_id')
 
+    def to_read_model(self, schema: BaseModel) -> BaseModel:
+        return schema(
+            id=self.id,
+            name=self.name,
+            notes=self.notes,
+            studio_id=self.studio_id
+        )
+
 
 class Student(Base):
     __tablename__ = 'students'
@@ -98,6 +116,14 @@ class Student(Base):
         secondary='student_group_association',
         back_populates='students'
     )
+
+    def to_read_model(self, schema: BaseModel) -> BaseModel:
+        return schema(
+            id=self.id,
+            name=self.name,
+            notes=self.notes,
+            individual_lesson_id=self.individual_lesson_id
+        )
 
 
 class IndividualLesson(Base):
