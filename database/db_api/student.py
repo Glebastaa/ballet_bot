@@ -21,9 +21,13 @@ async def add_student_to_group(
 ) -> None:
     """Add student to group."""
 
-    student = await session.get(Student, student_id)
-    group = await session.get(Group, group_id)
-    student.groups.append(group)
+    student = await session.scalar(
+        select(Student).where(Student.id == student_id)
+    )
+    group = await session.scalar(
+        select(Group).where(
+            Group.id == group_id).options(selectinload(Group.students))
+        )
     group.students.append(student)
     await session.commit()
 
