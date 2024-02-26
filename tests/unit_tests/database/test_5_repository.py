@@ -5,9 +5,10 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from database.models import Group, Schedule, Student, Studio, WeekDays
-from exceptions import EntityAlreadyExists
+from database.models import Group, IndividualLesson, Schedule, Student, Studio, WeekDays
+from exceptions import DoesNotExist, EntityAlreadyExists
 from services.group import GroupService
+from services.individual_lesson import IndividualLessonService
 from services.student import StudentService
 from services.studio import StudioService
 
@@ -65,7 +66,11 @@ class TestServiceGroup:
         [
             ['Анбу', 1],
             ['Анбу', 1, datetime.strptime('10:23', "%H:%M").time(),
-             WeekDays.monday]
+             WeekDays.monday],
+            ['Анбу', 1, datetime.strptime('10:23', "%H:%M").time(),
+             'Понедельник'],
+            # ['Анбу', 1, datetime.strptime('10:23', "%H:%M").time(),
+            #  'Выдуманный день']
         ])
     async def test_add_group(self, session, studios, data):
         await GroupService().add_group(*data)
@@ -208,3 +213,62 @@ class TestStudentService:
         group = await session.scalar(stmt)
         for st in group.students:
             assert st.id != 1
+
+    async def test_get_all_students(self, students):
+        students = await StudentService().get_all_students()
+
+        assert set(
+            [student.name for student in students]
+        ) == set(['Саске', 'Сакура', 'Наруто'])
+
+
+@pytest.mark.repo4
+class TestIndividualLesson:
+    async def _get_by_studio_id_or_all(self, session, studio_id: int = None):
+        stmt = select(IndividualLesson)
+        if studio_id:
+            stmt = stmt.where(IndividualLesson.studio_id == studio_id)
+        return await session.scalars(stmt)
+
+    async def test_add_indiv_lesson(self, session, studios):
+        await IndividualLessonService().add_individual_lesson(
+            1,
+            datetime.strptime('11:11', "%H:%M").time(),
+            WeekDays.monday
+        )
+
+        indiv = await self._get_by_studio_id_or_all(session, 1)
+        indiv = indiv.all()
+        assert len(indiv) == 1
+        assert indiv[0] is not None
+        assert indiv[0].start_date == WeekDays.monday
+        assert indiv[0].start_time.strftime("%H:%M") == '11:11'
+
+    async def test_get_time_and_date_from_indiv(self, session, indivs):
+        lesson = await IndividualLessonService().get_date_time_from_indiv(1)
+
+        assert lesson is not None
+        assert lesson[1] == WeekDays.monday
+        assert lesson[0].strftime("%H:%M") == '11:11'\
+
+        with pytest.raises(DoesNotExist):
+            await IndividualLessonService().get_date_time_from_indiv(4)
+
+    async def test_delete_individual_lesson(self, session, indivs):
+        await IndividualLessonService().delete_individual_lesson(1)
+
+        indiv = await session.get(IndividualLesson, 1)
+        assert indiv is None
+
+    # async def test_add_student_to_individual_lesson(
+    #         self,
+    #         session,
+    #         indivs,
+    #         students):
+    #     await add_student_to_individual_lesson(session, 1, 1)
+
+    #     stmt = select(IndividualLesson).where(
+    #         IndividualLesson.id == 1).options(
+    #             selectinload(IndividualLesson.students))
+    #     indiv = await session.scalar(stmt)
+    #     assert 1 == indiv.students[0].id

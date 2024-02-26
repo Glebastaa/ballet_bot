@@ -6,8 +6,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from config import settings
 from database.db import Base
-from database.models import Student # noqa
-from utils.unitofwork import UnitOfWork
+from database.models import Student # noqa: for alembic
 
 
 @pytest.fixture(scope="session")
@@ -35,12 +34,8 @@ async def create_db():
 async def session(create_db):
     sessionmaker = async_sessionmaker(
         create_db,
-        expire_on_commit=False
+        expire_on_commit=False,
+        autoflush=False
     )
     async with sessionmaker() as session:
         yield session
-
-
-@pytest.fixture
-async def uow():
-    return UnitOfWork()
