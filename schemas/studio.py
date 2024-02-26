@@ -1,17 +1,17 @@
 from pydantic import BaseModel
 
 
-class StudioBase(BaseModel):
+class StudioSchemaBase(BaseModel):
     name: str
 
 
-class StudioAdd(StudioBase):
+class StudioSchemaAdd(StudioSchemaBase):
     pass
 
 
-class StudioUpdate(StudioBase):
+class StudioSchemaUpdate(StudioSchemaBase):
     pass
 
 
-class StudioRead(StudioBase):
+class StudioSchema(StudioSchemaBase):
     id: int

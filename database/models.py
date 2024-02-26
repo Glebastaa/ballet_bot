@@ -14,7 +14,6 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.db import Base
-from schemas.group import GroupSchema
 
 
 intpk = Annotated[int, mapped_column(primary_key=True)]
@@ -36,6 +35,12 @@ class Studio(Base):
         back_populates='studio',
         cascade='all, delete'
     )
+
+    def to_read_model(self, schema: BaseModel) -> BaseModel:
+        return schema(
+            id=self.id,
+            name=self.name
+        )
 
 
 class WeekDays(Enum):
