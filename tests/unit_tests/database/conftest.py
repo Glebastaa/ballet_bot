@@ -58,18 +58,15 @@ async def groups(session, studios):
 async def students(session):
     student_1 = Student(
         name='Наруто',
-        notes=None,
-        individual_lesson_id=None
+        notes=None
     )
     student_2 = Student(
         name='Саске',
-        notes=None,
-        individual_lesson_id=None
+        notes=None
     )
     student_3 = Student(
         name='Сакура',
-        notes=None,
-        individual_lesson_id=None
+        notes=None
     )
     session.add_all([student_1, student_2, student_3])
     await session.commit()
@@ -84,6 +81,18 @@ async def students_groups(session, students, groups):
     group = await session.scalar(stmt)
 
     group.students = students.scalars().all()
+    await session.commit()
+
+
+@pytest.fixture
+async def students_indivs(session, students, indivs):
+    students = await session.execute(select(Student))
+    stmt = select(IndividualLesson).where(
+        IndividualLesson.id == 1).options(
+        selectinload(IndividualLesson.students))
+    indiv = await session.scalar(stmt)
+
+    indiv.students = students.scalars().all()
     await session.commit()
 
 

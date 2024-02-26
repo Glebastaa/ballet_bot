@@ -31,7 +31,7 @@ class Studio(Base):
         lazy='selectin',
         cascade='all, delete'
     )
-    individual_lesson: Mapped['IndividualLesson'] = relationship(
+    individual_lessons: Mapped[list['IndividualLesson']] = relationship(
         back_populates='studio',
         cascade='all, delete'
     )
@@ -110,11 +110,9 @@ class Student(Base):
     id: Mapped[intpk]
     name: Mapped[NameStr]
     notes: Mapped[str | None]
-    individual_lesson_id: Mapped[int | None] = mapped_column(
-        ForeignKey('individual_lessons.id')
-    )
 
-    individual_lesson: Mapped['IndividualLesson'] = relationship(
+    individual_lessons: Mapped[list['IndividualLesson']] = relationship(
+        secondary='student_indiv_lesson_association',
         back_populates='students'
     )
     groups: Mapped[list['Group']] = relationship(
@@ -126,8 +124,7 @@ class Student(Base):
         return schema(
             id=self.id,
             name=self.name,
-            notes=self.notes,
-            individual_lesson_id=self.individual_lesson_id
+            notes=self.notes
         )
 
 
@@ -143,9 +140,12 @@ class IndividualLesson(Base):
     )
 
     students: Mapped[list['Student']] = relationship(
-        back_populates='individual_lesson'
+        secondary='student_indiv_lesson_association',
+        back_populates='individual_lessons'
     )
-    studio: Mapped['Studio'] = relationship(back_populates='individual_lesson')
+    studio: Mapped['Studio'] = relationship(
+        back_populates='individual_lessons'
+    )
 
     def to_read_model(self, schema: BaseModel) -> BaseModel:
         return schema(
@@ -172,4 +172,22 @@ student_group_association = Table(
         nullable=False
     ),
     UniqueConstraint('group_id', 'student_id')
+)
+
+
+student_indiv_lesson_association = Table(
+    'student_indiv_lesson_association',
+    Base.metadata,
+    Column('id', Integer, primary_key=True),
+    Column(
+        'individual_lesson_id',
+        ForeignKey('individual_lessons.id', ondelete='CASCADE'),
+        nullable=False
+    ),
+    Column(
+        'student_id',
+        ForeignKey('students.id', ondelete='CASCADE'),
+        nullable=False
+    ),
+    UniqueConstraint('individual_lesson_id', 'student_id')
 )

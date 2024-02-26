@@ -44,19 +44,23 @@ class IndividualLessonService:
     async def delete_individual_lesson(
             self,
             indiv_id: int
-    ) -> None:
+    ) -> str:
         """Delete individual lesson."""
         async with self.uow:
-            await self.uow.individual_lesson.delete(indiv_id)
+            lesson = await self.uow.individual_lesson.delete(indiv_id)
+            studio = await self.uow.studio.get(id=lesson.studio_id)
             await self.uow.commit()
+            return studio.name
 
-    # async def add_student_to_individual_lesson(
-    #         session: AsyncSession,
-    #         indiv_id: int,
-    #         student_id: int
-    # ) -> None:
-    #     """Add a student to individual lesson."""
-
-    #     student = await session.get(Student, student_id)
-    #     student.individual_lesson_id = indiv_id
-    #     await session.commit()
+    async def add_student_to_individual_lesson(
+            self,
+            indiv_id: int,
+            student_id: int
+    ) -> None:
+        """Add a student to individual lesson."""
+        async with self.uow:
+            indiv = await self.uow.individual_lesson.get(indiv_id)
+            student = await self.uow.student.get(student_id)
+            await self.uow.session.refresh(indiv, attribute_names=['students'])
+            indiv.students.append(student)
+            await self.uow.commit()

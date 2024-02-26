@@ -5,7 +5,14 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from database.models import Group, IndividualLesson, Schedule, Student, Studio, WeekDays
+from database.models import (
+    Group,
+    IndividualLesson,
+    Schedule,
+    Student,
+    Studio,
+    WeekDays
+)
 from exceptions import DoesNotExist, EntityAlreadyExists
 from services.group import GroupService
 from services.individual_lesson import IndividualLessonService
@@ -69,24 +76,24 @@ class TestServiceGroup:
              WeekDays.monday],
             ['Анбу', 1, datetime.strptime('10:23', "%H:%M").time(),
              'Понедельник'],
-            # ['Анбу', 1, datetime.strptime('10:23', "%H:%M").time(),
-            #  'Выдуманный день']
         ])
     async def test_add_group(self, session, studios, data):
-        await GroupService().add_group(*data)
+        await GroupService().add_group(*[data[0], data[1]])
 
         group = await self._get_by_studio_id(session, 1)
         assert len(group) == 1
         assert group[0].name == 'Анбу'
 
-        schedule = await self._get_schedule_by_group_id(
-                session, group[0].id)
-        if len(data) == 2:
-            assert schedule is None
-        else:
-            assert schedule is not None
-            assert schedule.start_date.value == 'Понедельник'
-            assert schedule.start_time.strftime("%H:%M") == '10:23'
+        if len(data) > 2:
+            await GroupService().add_schedule_to_group(*[1, data[2], data[3]])
+            schedule = await self._get_schedule_by_group_id(
+                    session, group[0].id)
+            if len(data) == 2:
+                assert schedule is None
+            else:
+                assert schedule is not None
+                assert schedule.start_date.value == 'Понедельник'
+                assert schedule.start_time.strftime("%H:%M") == '10:23'
 
     async def test_add_duplicate_in_same_studio(self, session, groups):
         with pytest.raises(EntityAlreadyExists):
@@ -255,20 +262,23 @@ class TestIndividualLesson:
             await IndividualLessonService().get_date_time_from_indiv(4)
 
     async def test_delete_individual_lesson(self, session, indivs):
-        await IndividualLessonService().delete_individual_lesson(1)
+        studio_name = await IndividualLessonService().delete_individual_lesson(1)
 
         indiv = await session.get(IndividualLesson, 1)
         assert indiv is None
+        assert studio_name == 'Страна огня'
 
-    # async def test_add_student_to_individual_lesson(
-    #         self,
-    #         session,
-    #         indivs,
-    #         students):
-    #     await add_student_to_individual_lesson(session, 1, 1)
+    async def test_add_student_to_individual_lesson(
+            self,
+            session,
+            indivs,
+            students):
+        await IndividualLessonService().add_student_to_individual_lesson(1, 1)
 
-    #     stmt = select(IndividualLesson).where(
-    #         IndividualLesson.id == 1).options(
-    #             selectinload(IndividualLesson.students))
-    #     indiv = await session.scalar(stmt)
-    #     assert 1 == indiv.students[0].id
+        stmt = select(IndividualLesson).where(
+            IndividualLesson.id == 1).options(
+            selectinload(IndividualLesson.students))
+
+        indiv = await session.scalar(stmt)
+        students = indiv.students
+        assert students[0].name == 'Наруто'
