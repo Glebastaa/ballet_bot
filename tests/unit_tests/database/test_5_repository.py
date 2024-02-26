@@ -21,7 +21,12 @@ class TestServiceStudio:
 
     async def test_serv_get_studios(self, session, studios):
         studios = await StudioService().get_studios()
+
+        assert studios is not None
         assert len(studios) == 3
+        assert set(
+            [studio.name for studio in studios]
+        ) == set(['Страна огня', 'Страна воды', 'Страна ветра'])
 
     async def test_edit_studios(self, session, studios):
         await StudioService().edit_studio(1, 'Яметте кудасай, ониии-чан!')
