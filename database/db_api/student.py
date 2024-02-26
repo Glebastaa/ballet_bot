@@ -67,3 +67,11 @@ async def delete_student(
     await session.delete(student)
     await session.commit()
     return student.name
+
+
+async def get_all_students(session: AsyncSession) -> list[Student]:
+    """Get all students."""
+
+    stmt = select(Student).order_by(Student.id)
+    students = await session.execute(stmt)
+    return students.scalars().all()
