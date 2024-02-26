@@ -19,8 +19,8 @@ class GroupService:
             self,
             group_name: str,
             studio_id: int,
-            start_time: time = None,
-            start_date: WeekDays = None
+            start_time: time | None = None,
+            start_date: WeekDays | None = None
     ) -> GroupSchema:
         "Add a new group."
         validated_group = GroupSchemaAdd(name=group_name, studio_id=studio_id)
@@ -39,7 +39,6 @@ class GroupService:
                     start_date=start_date
                 )
                 await self.uow.schedule.add(validated_schedule.model_dump())
-
             await self.uow.commit()
             return group.to_read_model(GroupSchema)
 

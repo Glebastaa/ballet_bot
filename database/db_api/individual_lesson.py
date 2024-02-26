@@ -43,7 +43,7 @@ async def delete_individual_lesson(
 ) -> None:
     """Delete individual lesson."""
 
-    indiv = await session.get(IndividualLesson, 1)
+    indiv = await session.get(IndividualLesson, indiv_id)
     await session.delete(indiv)
     await session.commit()
 

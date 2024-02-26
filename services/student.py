@@ -1,4 +1,8 @@
-from schemas.student import StudentSchema, StudentSchemaAdd, StudentSchemaUpdate
+from schemas.student import (
+    StudentSchema,
+    StudentSchemaAdd,
+    StudentSchemaUpdate
+)
 from utils.unitofwork import UnitOfWork
 
 
@@ -38,6 +42,16 @@ class StudentService:
             group = await self.uow.group.get(group_id)
             await self.uow.session.refresh(group, attribute_names=['students'])
             return [st.to_read_model(StudentSchema) for st in group.students]
+
+    async def get_all_students(
+            self
+    ) -> list[StudentSchema | None]:
+        """Get list of all students from th db."""
+        async with self.uow:
+            students = await self.uow.student.get_all()
+            if not students:
+                return []
+            return [st.to_read_model(StudentSchema) for st in students]
 
     async def delete_student_from_group(
             self,

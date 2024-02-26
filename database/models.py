@@ -147,6 +147,15 @@ class IndividualLesson(Base):
     )
     studio: Mapped['Studio'] = relationship(back_populates='individual_lesson')
 
+    def to_read_model(self, schema: BaseModel) -> BaseModel:
+        return schema(
+            id=self.id,
+            start_time=self.start_time,
+            start_date=self.start_date,
+            notes=self.notes,
+            studio_id=self.studio_id
+        )
+
 
 student_group_association = Table(
     'student_group_association',
