@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 volumes:
   pgadmin_data_ballet:
@@ -12,7 +12,7 @@ services:
     env_file: .env
     restart: always
     ports:
-      - '5432:5432'
+      - "5432:5432"
     volumes:
       - pg_data_ballet:/var/lib/postgresql/data
 
@@ -22,7 +22,7 @@ services:
     env_file: .test.env
     restart: always
     ports:
-      - '5433:5432'
+      - "5433:5432"
     volumes:
       - pg_data_test:/var/lib/postgresql/data
 
@@ -34,7 +34,7 @@ services:
       PGADMIN_DEFAULT_EMAIL: ballet@ballet.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
-      - '5050:80'
+      - "5051:80"
     depends_on:
       - db
     volumes:

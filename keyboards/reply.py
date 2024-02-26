@@ -9,7 +9,10 @@ main = ReplyKeyboardMarkup(
         [
             KeyboardButton(text="Добавить ученика"),
             KeyboardButton(text="Добавить индив"),
-        ]
+        ],
+        [
+            KeyboardButton(text="Добавить ученика в группу"),
+        ],
     ],
     resize_keyboard=True,
     one_time_keyboard=True,
