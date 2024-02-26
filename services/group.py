@@ -18,9 +18,7 @@ class GroupService:
     async def add_group(
             self,
             group_name: str,
-            studio_id: int,
-            start_time: time | None = None,
-            start_date: WeekDays | None = None
+            studio_id: int
     ) -> GroupSchema:
         "Add a new group."
         validated_group = GroupSchemaAdd(name=group_name, studio_id=studio_id)
@@ -30,17 +28,25 @@ class GroupService:
                 raise EntityAlreadyExists
 
             group = await self.uow.group.add(validated_group.model_dump())
-
-            if start_date and start_time:
-                await self.uow.session.flush()
-                validated_schedule = ScheduleSchemaAdd(
-                    group_id=group.id,
-                    start_time=start_time,
-                    start_date=start_date
-                )
-                await self.uow.schedule.add(validated_schedule.model_dump())
             await self.uow.commit()
             return group.to_read_model(GroupSchema)
+
+    async def add_schedule_to_group(
+            self,
+            group_id: int,
+            start_time: time,
+            start_date: WeekDays
+    ) -> ScheduleSchema:
+        "Add schedule to group."
+        validated_data = ScheduleSchemaAdd(
+            group_id=group_id,
+            start_time=start_time,
+            start_date=start_date
+        )
+        async with self.uow:
+            schedule = await self.uow.schedule.add(validated_data.model_dump())
+            await self.uow.commit()
+            return schedule
 
     async def get_groups(self, studio_id: int) -> list[GroupSchema]:
         "Get list of groups."

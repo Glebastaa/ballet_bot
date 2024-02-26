@@ -12,7 +12,6 @@ class StudentSchemaAdd(StudentSchemaBase):
 
 class StudentSchema(StudentSchemaBase):
     id: int
-    individual_lesson_id: int | None
 
     class Config:
         from_attributes = True
