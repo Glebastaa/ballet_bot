@@ -1,8 +1,8 @@
-"""create database
+"""create db
 
-Revision ID: 8ecc597d3e50
+Revision ID: 15daeca9f2f7
 Revises: 
-Create Date: 2024-02-28 20:00:13.366057
+Create Date: 2024-03-01 19:40:17.056050
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '8ecc597d3e50'
+revision: str = '15daeca9f2f7'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -34,13 +34,13 @@ def upgrade() -> None:
     )
     op.create_table('groups',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('group_type', sa.Enum('GROUP', 'INDIVIDUAL', name='grouptype'), nullable=False),
+    sa.Column('is_individual', sa.Boolean(), nullable=False),
     sa.Column('name', sa.String(length=50), nullable=False),
     sa.Column('notes', sa.String(), nullable=True),
     sa.Column('studio_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['studio_id'], ['studios.id'], name=op.f('fk_groups_studio_id_studios')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_groups')),
-    sa.UniqueConstraint('name', 'studio_id', name=op.f('uq_groups_name'))
+    sa.UniqueConstraint('name', 'studio_id', 'is_individual', name=op.f('uq_groups_name'))
     )
     op.create_table('rooms',
     sa.Column('id', sa.Integer(), nullable=False),
