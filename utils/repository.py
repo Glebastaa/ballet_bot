@@ -45,7 +45,7 @@ class SQLAlchemyRepository(AbstractRepository):
         if filter_by:
             stmt = stmt.filter_by(**filter_by)
         res = await self.session.execute(stmt)
-        return [entity for entity in res.scalars().all()]
+        return res.scalars().all()
 
     async def delete(self, id: int):
         stmt = select(self.model).where(self.model.id == id)

@@ -20,6 +20,16 @@ intpk = Annotated[int, mapped_column(primary_key=True)]
 NameStr = Annotated[str, mapped_column(String(50))]
 
 
+class WeekDays(Enum):
+    monday = 'Понедельник'
+    tuesday = 'Вторник'
+    wednesday = 'Среда'
+    thursday = 'Четверг'
+    friday = 'Пятница'
+    saturday = 'Суббота'
+    sunday = 'Воскресенье'
+
+
 class Studio(Base):
     __tablename__ = 'studios'
 
@@ -31,8 +41,9 @@ class Studio(Base):
         lazy='selectin',
         cascade='all, delete'
     )
-    individual_lessons: Mapped[list['IndividualLesson']] = relationship(
+    rooms: Mapped[list['Room']] = relationship(
         back_populates='studio',
+        lazy='selectin',
         cascade='all, delete'
     )
 
@@ -43,14 +54,28 @@ class Studio(Base):
         )
 
 
-class WeekDays(Enum):
-    monday = 'Понедельник'
-    tuesday = 'Вторник'
-    wednesday = 'Среда'
-    thursday = 'Четверг'
-    friday = 'Пятница'
-    saturday = 'Суббота'
-    sunday = 'Воскресенье'
+class Room(Base):
+    __tablename__ = 'rooms'
+    __table_args__ = (
+        UniqueConstraint('name', 'studio_id'),
+    )
+
+    id: Mapped[intpk]
+    name: Mapped[NameStr]
+    studio_id: Mapped[int] = mapped_column(ForeignKey('studios.id'))
+
+    studio: Mapped['Studio'] = relationship(back_populates='rooms')
+    schedules: Mapped['Schedule'] = relationship(
+        back_populates='room',
+        cascade='all, delete'
+    )
+
+    def to_read_model(self, schema: BaseModel) -> BaseModel:
+        return schema(
+            id=self.id,
+            name=self.name,
+            studio_id=self.studio_id
+        )
 
 
 class Schedule(Base):
@@ -60,24 +85,33 @@ class Schedule(Base):
     group_id: Mapped[int] = mapped_column(
         ForeignKey('groups.id')
     )
+    room_id: Mapped[int] = mapped_column(
+        ForeignKey('rooms.id')
+    )
     start_time: Mapped[time]
     start_date: Mapped[WeekDays]
 
     group: Mapped['Group'] = relationship(back_populates='schedules')
+    room: Mapped['Room'] = relationship(back_populates='schedules')
 
     def to_read_model(self, schema: BaseModel) -> BaseModel:
         return schema(
             id=self.id,
             group_id=self.group_id,
             start_time=self.start_time,
-            start_date=self.start_date
+            start_date=self.start_date,
+            room_id=self.room_id
         )
 
 
 class Group(Base):
     __tablename__ = 'groups'
+    __table_args__ = (
+        UniqueConstraint('name', 'studio_id', 'is_individual'),
+    )
 
     id: Mapped[intpk]
+    is_individual: Mapped[bool]
     name: Mapped[NameStr]
     notes: Mapped[str | None]
     studio_id: Mapped[int] = mapped_column(
@@ -93,14 +127,14 @@ class Group(Base):
         secondary='student_group_association',
         back_populates='groups'
     )
-    UniqueConstraint('name', 'studio_id')
 
     def to_read_model(self, schema: BaseModel) -> BaseModel:
         return schema(
             id=self.id,
             name=self.name,
             notes=self.notes,
-            studio_id=self.studio_id
+            studio_id=self.studio_id,
+            is_individual=self.is_individual
         )
 
 
@@ -111,10 +145,6 @@ class Student(Base):
     name: Mapped[NameStr]
     notes: Mapped[str | None]
 
-    individual_lessons: Mapped[list['IndividualLesson']] = relationship(
-        secondary='student_indiv_lesson_association',
-        back_populates='students'
-    )
     groups: Mapped[list['Group']] = relationship(
         secondary='student_group_association',
         back_populates='students'
@@ -125,35 +155,6 @@ class Student(Base):
             id=self.id,
             name=self.name,
             notes=self.notes
-        )
-
-
-class IndividualLesson(Base):
-    __tablename__ = 'individual_lessons'
-
-    id: Mapped[intpk]
-    start_time: Mapped[time]
-    start_date: Mapped[WeekDays]
-    notes: Mapped[str | None]
-    studio_id: Mapped[int] = mapped_column(
-        ForeignKey('studios.id')
-    )
-
-    students: Mapped[list['Student']] = relationship(
-        secondary='student_indiv_lesson_association',
-        back_populates='individual_lessons'
-    )
-    studio: Mapped['Studio'] = relationship(
-        back_populates='individual_lessons'
-    )
-
-    def to_read_model(self, schema: BaseModel) -> BaseModel:
-        return schema(
-            id=self.id,
-            start_time=self.start_time,
-            start_date=self.start_date,
-            notes=self.notes,
-            studio_id=self.studio_id
         )
 
 
@@ -172,22 +173,4 @@ student_group_association = Table(
         nullable=False
     ),
     UniqueConstraint('group_id', 'student_id')
-)
-
-
-student_indiv_lesson_association = Table(
-    'student_indiv_lesson_association',
-    Base.metadata,
-    Column('id', Integer, primary_key=True),
-    Column(
-        'individual_lesson_id',
-        ForeignKey('individual_lessons.id', ondelete='CASCADE'),
-        nullable=False
-    ),
-    Column(
-        'student_id',
-        ForeignKey('students.id', ondelete='CASCADE'),
-        nullable=False
-    ),
-    UniqueConstraint('individual_lesson_id', 'student_id')
 )

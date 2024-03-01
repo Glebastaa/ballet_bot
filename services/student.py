@@ -1,3 +1,5 @@
+from exceptions import IndivIsFull, InvalidIsIndividual
+from schemas.constant import MAX_STUDENTS_IN_INDIV
 from schemas.student import (
     StudentSchema,
     StudentSchemaAdd,
@@ -23,20 +25,28 @@ class StudentService:
     async def add_student_to_group(
             self,
             student_id: int,
-            group_id: int
+            group_id: int,
+            is_individual: bool = False
     ) -> None:
         """Add student to group."""
         async with self.uow:
             student = await self.uow.student.get(student_id)
             group = await self.uow.group.get(group_id)
+
+            # if try add to group with is_individual=True or vice versa.
+            if group.is_individual != is_individual:
+                raise InvalidIsIndividual
+
             await self.uow.session.refresh(group, attribute_names=['students'])
+            if is_individual and len(group.students) >= MAX_STUDENTS_IN_INDIV:
+                raise IndivIsFull({'group_id': group.id})
             group.students.append(student)
             await self.uow.commit()
 
     async def get_students_from_group(
             self,
             group_id: int
-    ) -> list[StudentSchema | None]:
+    ) -> list[StudentSchema]:
         """Get list of students from the group."""
         async with self.uow:
             group = await self.uow.group.get(group_id)
@@ -45,12 +55,10 @@ class StudentService:
 
     async def get_all_students(
             self
-    ) -> list[StudentSchema | None]:
-        """Get list of all students from th db."""
+    ) -> list[StudentSchema]:
+        """Get list of all students from the db."""
         async with self.uow:
             students = await self.uow.student.get_all()
-            if not students:
-                return []
             return [st.to_read_model(StudentSchema) for st in students]
 
     async def delete_student_from_group(

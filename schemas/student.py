@@ -1,8 +1,10 @@
 from pydantic import BaseModel
 
+from schemas.base import NameStr
+
 
 class StudentSchemaBase(BaseModel):
-    name: str
+    name: NameStr
     notes: str | None = None
 
 

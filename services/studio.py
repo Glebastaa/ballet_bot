@@ -1,4 +1,6 @@
 from typing import Type
+
+from exceptions import EntityAlreadyExists
 from schemas.studio import StudioSchema, StudioSchemaAdd, StudioSchemaUpdate
 from utils.unitofwork import UnitOfWork
 
@@ -7,10 +9,18 @@ class StudioService:
     def __init__(self):
         self.uow: Type[UnitOfWork] = UnitOfWork()
 
+    async def _is_already_exists(self, name: str, uow: UnitOfWork) -> None:
+        if await self.uow.studio.get_all({'name': name}):
+            raise EntityAlreadyExists(
+                'Studio',
+                {'name': name}
+            )
+
     async def add_studio(self, studio_name: str) -> StudioSchema:
-        studio_dict = StudioSchemaAdd(name=studio_name).model_dump()
+        validated_data = StudioSchemaAdd(name=studio_name)
         async with self.uow:
-            st = await self.uow.studio.add(studio_dict)
+            await self._is_already_exists(studio_name, self.uow)
+            st = await self.uow.studio.add(validated_data.model_dump())
             await self.uow.commit()
             return st.to_read_model(StudioSchema)
 
@@ -25,11 +35,12 @@ class StudioService:
             new_name: str
             ) -> StudioSchema:
         """Edit studio' name."""
-        new_studio = StudioSchemaUpdate(name=new_name)
+        validated_data = StudioSchemaUpdate(name=new_name)
         async with self.uow:
+            await self._is_already_exists(new_name, self.uow)
             studio = await self.uow.studio.update(
                 studio_id,
-                new_studio.model_dump()
+                validated_data.model_dump()
             )
             await self.uow.commit()
             return studio.to_read_model(StudioSchema)
