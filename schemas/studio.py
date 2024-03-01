@@ -1,8 +1,10 @@
 from pydantic import BaseModel
 
+from schemas.base import NameStr
+
 
 class StudioSchemaBase(BaseModel):
-    name: str
+    name: NameStr
 
 
 class StudioSchemaAdd(StudioSchemaBase):

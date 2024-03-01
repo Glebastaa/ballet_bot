@@ -1,13 +1,16 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, PositiveInt
+
+from schemas.base import NameStr
 
 
 class GroupSchemaBase(BaseModel):
-    name: str
+    name: NameStr
     notes: str | None = None
+    is_individual: bool
 
 
 class GroupSchemaAdd(GroupSchemaBase):
-    studio_id: int
+    studio_id: PositiveInt
 
 
 class GroupSchema(GroupSchemaBase):
