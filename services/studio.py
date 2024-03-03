@@ -6,7 +6,7 @@ from utils.unitofwork import UnitOfWork
 
 
 class StudioService:
-    def __init__(self):
+    def __init__(self) -> None:
         self.uow: Type[UnitOfWork] = UnitOfWork()
 
     async def _is_already_exists(self, name: str, uow: UnitOfWork) -> None:

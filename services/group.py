@@ -14,7 +14,7 @@ LESSON_DURATION = 1
 
 
 class GroupService:
-    def __init__(self):
+    def __init__(self) -> None:
         self.uow = UnitOfWork()
 
     async def _is_already_exists(

@@ -39,3 +39,11 @@ class ScheduleTimeInsertionError(Exception):
     def __init__(self):
         message = 'Unable to insert the new time at schedule. Time is busy.'
         super().__init__(message)
+
+
+class UserAlreadyExistsError(Exception):
+    """Raised when an telegram id or username already exists."""
+
+    def __init__(self, entity_data: dict):
+        message = f'User with data {entity_data} already exists.'
+        super().__init__(message)

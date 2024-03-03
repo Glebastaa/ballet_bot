@@ -1,8 +1,8 @@
 """create db
 
-Revision ID: 15daeca9f2f7
+Revision ID: 07cf39dff2aa
 Revises: 
-Create Date: 2024-03-01 19:40:17.056050
+Create Date: 2024-03-03 20:28:24.860239
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '15daeca9f2f7'
+revision: str = '07cf39dff2aa'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -31,6 +31,14 @@ def upgrade() -> None:
     sa.Column('name', sa.String(length=50), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_studios')),
     sa.UniqueConstraint('name', name=op.f('uq_studios_name'))
+    )
+    op.create_table('users',
+    sa.Column('id', sa.BigInteger(), autoincrement=False, nullable=False),
+    sa.Column('username', sa.String(length=50), nullable=False),
+    sa.Column('role', sa.Enum('VISITOR', 'STUDENT', 'TEACHER', 'OWNER', name='userroles'), nullable=False),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_users')),
+    sa.UniqueConstraint('id', name=op.f('uq_users_id')),
+    sa.UniqueConstraint('username', name=op.f('uq_users_username'))
     )
     op.create_table('groups',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -78,6 +86,7 @@ def downgrade() -> None:
     op.drop_table('schedules')
     op.drop_table('rooms')
     op.drop_table('groups')
+    op.drop_table('users')
     op.drop_table('studios')
     op.drop_table('students')
     # ### end Alembic commands ###
