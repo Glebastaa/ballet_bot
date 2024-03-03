@@ -4,7 +4,7 @@ from utils.unitofwork import UnitOfWork
 
 
 class RoomService:
-    def __init__(self):
+    def __init__(self) -> None:
         self.uow = UnitOfWork()
 
     async def _is_already_exists(

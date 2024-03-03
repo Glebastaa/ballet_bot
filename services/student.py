@@ -9,7 +9,7 @@ from utils.unitofwork import UnitOfWork
 
 
 class StudentService:
-    def __init__(self):
+    def __init__(self) -> None:
         self.uow = UnitOfWork()
 
     async def add_student(self, student_name: str) -> StudentSchema:

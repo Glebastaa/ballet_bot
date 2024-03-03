@@ -12,6 +12,8 @@ from database.models import (
     Schedule,
     Student,
     Studio,
+    User,
+    UserRoles,
     WeekDays
 )
 
@@ -157,4 +159,41 @@ async def students_indivs(session, students_groups):
 
     group.students.append(student_1)
     group.students.append(student_2)
+    await session.commit()
+
+
+# User.
+@pytest.fixture
+async def users(session):
+    user_1 = User(
+        id=5213573061,
+        username='Сасуми Хиросава',
+        role=UserRoles.OWNER
+    )
+    user_2 = User(
+        id=5223573061,
+        username='Джо Хисаиши',
+        role=UserRoles.TEACHER
+    )
+    user_3 = User(
+        id=5233573061,
+        username='Юрима',
+        role=UserRoles.STUDENT
+    )
+    user_4 = User(
+        id=5243573061,
+        username='Tommy heavenly6',
+        role=UserRoles.STUDENT
+    )
+    user_5 = User(
+        id=5253573061,
+        username='Aiobahn',
+        role=UserRoles.VISITOR
+    )
+    user_6 = User(
+        id=5263573061,
+        username='Flow',
+        role=UserRoles.VISITOR
+    )
+    session.add_all([user_1, user_2, user_3, user_4, user_5, user_6])
     await session.commit()

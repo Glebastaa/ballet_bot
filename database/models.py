@@ -4,6 +4,7 @@ from typing import Annotated
 from pydantic import BaseModel
 
 from sqlalchemy import (
+    BigInteger,
     Column,
     ForeignKey,
     Integer,
@@ -18,6 +19,7 @@ from database.db import Base
 
 intpk = Annotated[int, mapped_column(primary_key=True)]
 NameStr = Annotated[str, mapped_column(String(50))]
+PswStr = Annotated[str, mapped_column(String(50))]
 
 
 class WeekDays(Enum):
@@ -28,6 +30,33 @@ class WeekDays(Enum):
     friday = 'Пятница'
     saturday = 'Суббота'
     sunday = 'Воскресенье'
+
+
+class UserRoles(Enum):
+    VISITOR = 'visitor'
+    STUDENT = 'student'
+    TEACHER = 'teacher'
+    OWNER = 'owner'
+
+
+class User(Base):
+    __tablename__ = 'users'
+
+    id: Mapped[int] = mapped_column(
+        BigInteger,
+        primary_key=True,
+        unique=True,
+        autoincrement=False
+    )
+    username: Mapped[str] = mapped_column(String(50), unique=True)
+    role: Mapped[UserRoles]
+
+    def to_read_model(self, schema: BaseModel) -> BaseModel:
+        return schema(
+            id=self.id,
+            username=self.username,
+            role=self.role
+        )
 
 
 class Studio(Base):

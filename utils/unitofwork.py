@@ -7,6 +7,7 @@ from repositories.room import RoomRepository
 from repositories.schedule import ScheduleRepository
 from repositories.student import StudentRepository
 from repositories.studio import StudioRepository
+from repositories.user import UserRepository
 
 
 class IUnitOfWork(ABC):
@@ -15,6 +16,7 @@ class IUnitOfWork(ABC):
     schedule: Type[ScheduleRepository]
     student: Type[StudentRepository]
     room: Type[RoomRepository]
+    user: Type[UserRepository]
 
     @abstractmethod
     def __init__(self):
@@ -51,6 +53,7 @@ class UnitOfWork(IUnitOfWork):
         self.schedule = ScheduleRepository(self.session)
         self.student = StudentRepository(self.session)
         self.room = RoomRepository(self.session)
+        self.user = UserRepository(self.session)
 
     async def __aexit__(self, *args):
         await self.rollback()
