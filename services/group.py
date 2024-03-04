@@ -99,7 +99,7 @@ class GroupService:
             start_time: time,
             start_date: WeekDays
     ) -> ScheduleSchema:
-        "Add schedule to group."
+        "Add a schedule to group."
         validated_data = ScheduleSchemaAdd(
             group_id=group_id,
             room_id=room_id,
@@ -123,7 +123,7 @@ class GroupService:
             studio_id: int,
             is_individual: bool = False
     ) -> list[GroupSchema]:
-        "Get list of groups or list of individual lessons."
+        "Gets list of groups or list of individual lessons."
         async with self.uow:
             groups = await self.uow.group.get_all(
                 {
@@ -139,7 +139,7 @@ class GroupService:
             new_group_name: str,
             is_individual: bool = False
     ) -> GroupSchema:
-        """Edit group."""
+        """Edit a group."""
         validated_group = GroupSchemaUpdate(
             name=new_group_name,
             is_individual=is_individual
@@ -163,7 +163,7 @@ class GroupService:
             self,
             group_id: int
     ) -> str:
-        """Delete group or inividual lesson."""
+        """Delete a group or inividual lesson."""
         async with self.uow:
             group = await self.uow.group.delete(group_id)
             await self.uow.commit()
@@ -189,7 +189,7 @@ class GroupService:
             new_date: WeekDays | None = None,
             new_time: time | None = None
     ) -> ScheduleSchema:
-        """Edit date."""
+        """Edit a date."""
         validated_data = ScheduleSchemaUpdate(
             start_date=new_date,
             start_time=new_time
@@ -220,6 +220,7 @@ class GroupService:
         student_id: int,
         is_individual: bool = False
     ) -> list[GroupSchema]:
+        """Gets a list of groups by student id."""
         async with self.uow:
             student = await self.uow.student.get(student_id)
             await self.uow.session.refresh(student, attribute_names=['groups'])
