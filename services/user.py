@@ -28,7 +28,7 @@ class UserService:
             telegram_id: int,
             username: str
     ) -> UserSchema:
-        """Add user to db."""
+        """Add a user to db."""
         validated_data = UserSchemaAdd(
             id=telegram_id,
             username=username,
@@ -45,7 +45,7 @@ class UserService:
             telegram_id: int,
             role: UserRoles
     ) -> UserSchema:
-        """Change role."""
+        """Change a role."""
         role = UserSchemaUpdateRole(role=role)
         async with self.uow:
             user = await self.uow.user.update(telegram_id, role.model_dump())
@@ -55,7 +55,7 @@ class UserService:
     async def get_visitors(
             self
     ) -> list[UserSchema]:
-        """Get list of visitors."""
+        """Gets all visitors."""
         async with self.uow:
             visitors = await self.uow.user.get_all(
                 {'role': UserRoles.VISITOR}
@@ -71,7 +71,7 @@ class UserService:
             await self.uow.commit()
 
     async def get_users_by_role(self, role: UserRoles) -> list[UserSchema]:
-        """Get list of users by they roles."""
+        """Gets all users by roles."""
         UserSchemaUpdateRole(role=role)  # some validation.
         async with self.uow:
             users = await self.uow.user.get_all(
@@ -80,7 +80,7 @@ class UserService:
             return [user.to_read_model(UserSchema) for user in users]
 
     async def delete_user(self, telegram_id: int) -> UserSchema:
-        """Delete user from db."""
+        """Delete a user from db."""
         async with self.uow:
             user = await self.uow.user.delete(telegram_id)
             await self.uow.commit()

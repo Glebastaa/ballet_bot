@@ -25,7 +25,7 @@ class RoomService:
             )
 
     async def add_room(self, room_name: str, studio_id: int) -> RoomSchema:
-        """Add room to studio."""
+        """Add a room to studio."""
         validated_data = RoomSchemaAdd(name=room_name, studio_id=studio_id)
         async with self.uow:
             await self._is_already_exists(self.uow, studio_id, room_name)
@@ -34,7 +34,7 @@ class RoomService:
             return room.to_read_model(RoomSchema)
 
     async def get_rooms(self, studio_id: int) -> list[RoomSchema]:
-        """Get list of rooms from studio."""
+        """Gets list of rooms from studio."""
         async with self.uow:
             rooms = await self.uow.room.get_all({'studio_id': studio_id})
             return [room.to_read_model(RoomSchema) for room in rooms]

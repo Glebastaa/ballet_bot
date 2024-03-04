@@ -148,3 +148,6 @@ dmypy.json
 
 # docker compose
 .yml
+
+# логи
+logs/

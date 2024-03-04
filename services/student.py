@@ -13,7 +13,7 @@ class StudentService:
         self.uow = UnitOfWork()
 
     async def add_student(self, student_name: str) -> StudentSchema:
-        """Create new student in db."""
+        """Create a new student in db."""
         validated_data = StudentSchemaAdd(name=student_name)
         async with self.uow:
             student = await self.uow.student.add(
@@ -28,7 +28,7 @@ class StudentService:
             group_id: int,
             is_individual: bool = False
     ) -> None:
-        """Add student to group."""
+        """Add a student to group."""
         async with self.uow:
             student = await self.uow.student.get(student_id)
             group = await self.uow.group.get(group_id)
@@ -47,7 +47,7 @@ class StudentService:
             self,
             group_id: int
     ) -> list[StudentSchema]:
-        """Get list of students from the group."""
+        """Gets list of students from the group."""
         async with self.uow:
             group = await self.uow.group.get(group_id)
             await self.uow.session.refresh(group, attribute_names=['students'])
@@ -56,7 +56,7 @@ class StudentService:
     async def get_all_students(
             self
     ) -> list[StudentSchema]:
-        """Get list of all students from the db."""
+        """Gets list of all students from the db."""
         async with self.uow:
             students = await self.uow.student.get_all()
             return [st.to_read_model(StudentSchema) for st in students]
@@ -80,7 +80,7 @@ class StudentService:
             student_id: int,
             new_name: str
     ) -> StudentSchema:
-        """Edit student's name."""
+        """Edit a student's name."""
         validated_data = StudentSchemaUpdate(name=new_name)
         async with self.uow:
             student = await self.uow.student.update(
