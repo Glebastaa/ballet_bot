@@ -4,7 +4,7 @@ from schemas.room import RoomSchema, RoomSchemaAdd, RoomSchemaUpdate
 from utils.unitofwork import UnitOfWork
 
 
-logger = setup_logger('room')
+# logger = setup_logger('room')
 
 
 class RoomService:
@@ -23,7 +23,7 @@ class RoomService:
         }
         room = await uow.room.get_all(filter_by)
         if room:
-            await logger.error(f'Зал "{room_name}" уже существует.')
+            # await logger.error(f'Зал "{room_name}" уже существует.')
             raise EntityAlreadyExists(
                 'Room',
                 filter_by
@@ -36,7 +36,7 @@ class RoomService:
             await self._is_already_exists(self.uow, studio_id, room_name)
             room = await self.uow.room.add(validated_data.model_dump())
             await self.uow.commit()
-            await logger.info(f'Новый зал "{room_name}" добавлен.')
+            # await logger.info(f'Новый зал "{room_name}" добавлен.')
             return room.to_read_model(RoomSchema)
 
     async def get_rooms(self, studio_id: int) -> list[RoomSchema]:
@@ -56,8 +56,8 @@ class RoomService:
                 validated_data.model_dump()
             )
             await self.uow.commit()
-            await logger.info(
-                f'У зала по id: {room_id} изменено имя на "{new_name}"')
+            # await logger.info(
+                # f'У зала по id: {room_id} изменено имя на "{new_name}"')
             return room.to_read_model(RoomSchema)
 
     async def delete_room(self, room_id: int) -> str:
@@ -65,5 +65,5 @@ class RoomService:
         async with self.uow:
             room = await self.uow.room.delete(room_id)
             await self.uow.commit()
-            await logger.info(f'Зал "{room.name}" удалена.')
+            # await logger.info(f'Зал "{room.name}" удалена.')
             return room.to_read_model(RoomSchema).name

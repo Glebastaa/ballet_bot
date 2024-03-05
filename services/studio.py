@@ -6,7 +6,7 @@ from schemas.studio import StudioSchema, StudioSchemaAdd, StudioSchemaUpdate
 from utils.unitofwork import UnitOfWork
 
 
-logger = setup_logger('studio')
+# logger = setup_logger('studio')
 
 
 class StudioService:
@@ -15,7 +15,7 @@ class StudioService:
 
     async def _is_already_exists(self, name: str, uow: UnitOfWork) -> None:
         if await self.uow.studio.get_all({'name': name}):
-            await logger.error(f'Студия "{name}" уже существует.')
+            # await logger.error(f'Студия "{name}" уже существует.')
             raise EntityAlreadyExists(
                 'Studio',
                 {'name': name}
@@ -28,7 +28,7 @@ class StudioService:
             await self._is_already_exists(studio_name, self.uow)
             st = await self.uow.studio.add(validated_data.model_dump())
             await self.uow.commit()
-            await logger.info(f'Студия "{st.name}" добавлена.')
+            # await logger.info(f'Студия "{st.name}" добавлена.')
             return st.to_read_model(StudioSchema)
 
     async def get_studios(self) -> list[StudioSchema]:
@@ -51,8 +51,8 @@ class StudioService:
                 validated_data.model_dump()
             )
             await self.uow.commit()
-            await logger.info(
-                f'Имя студии id: {studio_id} отредактировано на "{new_name}"')
+            # await logger.info(
+            #     f'Имя студии id: {studio_id} отредактировано на "{new_name}"')
             return studio.to_read_model(StudioSchema)
 
     async def delete_studio(self, studio_id: int) -> str:
@@ -60,5 +60,5 @@ class StudioService:
         async with self.uow:
             studio = await self.uow.studio.delete(studio_id)
             await self.uow.commit()
-            await logger.info(f'Студия "{studio.name}" удалена.')
+            # await logger.info(f'Студия "{studio.name}" удалена.')
             return studio.name
