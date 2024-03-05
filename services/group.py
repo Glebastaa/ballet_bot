@@ -1,16 +1,19 @@
 from datetime import datetime, time, timedelta
+
 from database.models import WeekDays
 from exceptions import EntityAlreadyExists, ScheduleTimeInsertionError
+from logger_config import setup_logger
 from schemas.group import GroupSchema, GroupSchemaAdd, GroupSchemaUpdate
 from schemas.schedule import (
     ScheduleSchema,
     ScheduleSchemaAdd,
     ScheduleSchemaUpdate
 )
-
 from utils.unitofwork import UnitOfWork
 
 LESSON_DURATION = 1
+
+logger = setup_logger('group')
 
 
 class GroupService:
@@ -30,6 +33,10 @@ class GroupService:
             'is_individual': is_individual
         }
         if await uow.group.get_all(filter_by=filter_by):
+            await logger.error(
+                f'Группа "{group_name}" в студии по id {studio_id} '
+                'уже существует.'
+            )
             raise EntityAlreadyExists(
                 'Group',
                 filter_by
@@ -57,14 +64,22 @@ class GroupService:
                 continue
 
             timeslot = datetime.combine(datetime.today(), schedule.start_time)
+            log_msg = (
+                    f'Невозможно добавить расписание. Время '
+                    f'{start_time} уже занято или слишком близко к '
+                    'существующему расписанию.'
+                )
             if new_time == timeslot:
+                await logger.error(log_msg)
                 raise ScheduleTimeInsertionError
             if abs(new_time - timeslot) == td:
                 break
             # Add lesson duration.
             if abs(new_time - (timeslot + td)) < td:
+                await logger.error(log_msg)
                 raise ScheduleTimeInsertionError
             if abs(new_time - (timeslot - td)) < td:
+                await logger.error(log_msg)
                 raise ScheduleTimeInsertionError
 
     async def add_group(
@@ -90,6 +105,9 @@ class GroupService:
             )
             group = await self.uow.group.add(validated_data.model_dump())
             await self.uow.commit()
+            await logger.info(
+                f'Группа "{group_name}" добавлена в студию {studio_id}'
+            )
             return group.to_read_model(GroupSchema)
 
     async def add_schedule_to_group(
@@ -116,6 +134,10 @@ class GroupService:
             )
             schedule = await self.uow.schedule.add(validated_data.model_dump())
             await self.uow.commit()
+            await logger.info(
+                f'Рассписание "{start_time}" - "{start_date.value}" добавлено '
+                f'для группы {group_id}'
+            )
             return schedule
 
     async def get_groups(
@@ -157,6 +179,10 @@ class GroupService:
                 validated_group.model_dump()
             )
             await self.uow.commit()
+            await logger.info(
+                f'У группы по id {group_id} изменено имя '
+                f'на "{new_group_name}".'
+                )
             return group.to_read_model(GroupSchema)
 
     async def delete_group(
@@ -167,6 +193,7 @@ class GroupService:
         async with self.uow:
             group = await self.uow.group.delete(group_id)
             await self.uow.commit()
+            await logger.info(f'Группа "{group.name}" удалена.')
             return group.to_read_model(GroupSchema).name
 
     async def get_date_time_group(
@@ -213,6 +240,11 @@ class GroupService:
                 validated_data.model_dump(exclude_none=True)
             )
             await self.uow.commit()
+            await logger.info(
+                f'Расписание: "{old_schedule.start_date.value}" - '
+                f'{old_schedule.start_time} изменено на '
+                f'"{schedule.start_date.value}" - {schedule.start_time}.'
+            )
             return schedule.to_read_model(ScheduleSchema)
 
     async def get_groups_from_student(

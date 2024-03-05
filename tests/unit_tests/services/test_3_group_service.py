@@ -123,8 +123,10 @@ class TestGroupService:
              WeekDays.monday, pytest.raises(ScheduleTimeInsertionError)],
             [3, 2, datetime.strptime('10:23', "%H:%M").time(),
              WeekDays.monday, does_not_raise()],
+            [3, 2, datetime.strptime('10:23', "%H:%M").time(),
+             WeekDays('Четверг'), does_not_raise()]
         ])
-    async def test_schedule_to_group_(
+    async def test_schedule_to_group(
         self,
         session,
         groups,
