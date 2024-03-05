@@ -1,4 +1,5 @@
 from exceptions import IndivIsFull, InvalidIsIndividual
+from logger_config import setup_logger
 from schemas.constant import MAX_STUDENTS_IN_INDIV
 from schemas.student import (
     StudentSchema,
@@ -6,6 +7,9 @@ from schemas.student import (
     StudentSchemaUpdate
 )
 from utils.unitofwork import UnitOfWork
+
+
+logger = setup_logger('student')
 
 
 class StudentService:
@@ -20,6 +24,7 @@ class StudentService:
                 validated_data.model_dump()
             )
             await self.uow.commit()
+            await logger.info(f'Ученик "{student_name}" добавлен.')
             return student.to_read_model(StudentSchema)
 
     async def add_student_to_group(
@@ -41,6 +46,9 @@ class StudentService:
             if is_individual and len(group.students) >= MAX_STUDENTS_IN_INDIV:
                 raise IndivIsFull({'group_id': group.id})
             group.students.append(student)
+            await logger.info(
+                f'Ученик "{student.name}" добавлен в группу "{group.name}".'
+            )
             await self.uow.commit()
 
     async def get_students_from_group(
@@ -73,6 +81,9 @@ class StudentService:
             await self.uow.session.refresh(group, attribute_names=['students'])
             group.students.remove(student)
             await self.uow.commit()
+            await logger.info(
+                f'Ученик "{student.name}" удален из группы "{group.name}".'
+            )
             return student.name
 
     async def edit_student(
@@ -88,6 +99,8 @@ class StudentService:
                 validated_data.model_dump(exclude_none=True)
             )
             await self.uow.commit()
+            await logger.info(
+                f'У ученика по id: {student_id} изменено имя на "{new_name}"')
             return student
 
     async def delete_student(
@@ -98,4 +111,5 @@ class StudentService:
         async with self.uow:
             student = await self.uow.student.delete(student_id)
             await self.uow.commit()
+            await logger.info(f'Ученик "{student.name}" удален.')
             return student.name
