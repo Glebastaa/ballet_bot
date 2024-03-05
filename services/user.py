@@ -7,7 +7,7 @@ from schemas.user import UserSchema, UserSchemaAdd, UserSchemaUpdateRole
 from utils.unitofwork import UnitOfWork
 
 
-# logger = setup_logger('user')
+logger = setup_logger('user')
 
 
 class UserService:
@@ -23,10 +23,10 @@ class UserService:
         id_check = await uow.user.get(telegram_id)
         name_check = await uow.user.get_all({'username': username})
         if id_check or name_check:
-            # await logger.error(
-            #     f'Пользователь "{telegram_id}" уже существует. '
-            #     f'Либо существует юзернейм "{username}".'
-            # )
+            logger.error(
+                f'Пользователь "{telegram_id}" уже существует. '
+                f'Либо существует юзернейм "{username}".'
+            )
             raise UserAlreadyExistsError(
                 {'telegram_id': telegram_id,
                  'username': username}
@@ -47,10 +47,10 @@ class UserService:
             await self._is_already_exists(telegram_id, username, self.uow)
             user = await self.uow.user.add(validated_data.model_dump())
             await self.uow.commit()
-            # await logger.info(
-            #     f'Пользователь "{telegram_id}" - "{username}" '
-            #     'добавлен как посетитель.'
-            # )
+            logger.info(
+                f'Пользователь "{telegram_id}" - "{username}" '
+                'добавлен как посетитель.'
+            )
             return user.to_read_model(UserSchema)
 
     async def switch_to_another_role(
@@ -63,10 +63,10 @@ class UserService:
         async with self.uow:
             user = await self.uow.user.update(telegram_id, role.model_dump())
             await self.uow.commit()
-            # await logger.info(
-            #     f'Роль пользователя "{telegram_id}" - '
-            #     f'"{user.username}" изменена на "{user.role.value}".'
-            # )
+            logger.info(
+                f'Роль пользователя "{telegram_id}" - '
+                f'"{user.username}" изменена на "{user.role.value}".'
+            )
             return user.to_read_model(UserSchema)
 
     async def get_visitors(
@@ -85,7 +85,7 @@ class UserService:
             await self.uow.user.delete_all(
                 {'role': UserRoles.VISITOR}
             )
-            # await logger.info('БД очищена от посетителей.')
+            logger.info('БД очищена от посетителей.')
             await self.uow.commit()
 
     async def get_users_by_role(self, role: UserRoles) -> list[UserSchema]:
@@ -102,7 +102,7 @@ class UserService:
         async with self.uow:
             user = await self.uow.user.delete(telegram_id)
             await self.uow.commit()
-            # await logger.info(
-            #     f'Пользователь "{telegram_id}" - "{user.username}" удален.'
-            # )
+            logger.info(
+                f'Пользователь "{telegram_id}" - "{user.username}" удален.'
+            )
             return user.to_read_model(UserSchema)

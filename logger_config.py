@@ -1,26 +1,35 @@
 import os
+import logging
+import atexit
 
-from aiologger import Logger
-from aiologger.levels import LogLevel
-from aiologger.handlers.files import AsyncTimedRotatingFileHandler
-from aiologger.formatters.base import Formatter
+from logging.handlers import RotatingFileHandler, QueueHandler, QueueListener
+from multiprocessing import Queue
 
 
-def setup_logger(name, level=LogLevel.INFO):
+def setup_logger(name, level=logging.INFO):
     log_path = os.path.join('logs', 'logs.log')
-    formatter = Formatter(
-        fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
-    logger = Logger.with_default_handlers(
-        name=name,
-        level=level
+    logger = logging.getLogger(
+        name=name
     )
-    handler = AsyncTimedRotatingFileHandler(
-        filename=log_path,
-        when='W6',
-        backup_count=5,
+    handler = RotatingFileHandler(
+        log_path,
+        maxBytes=10000000,
+        backupCount=5,
         encoding='utf-8'
     )
-    handler.formatter = formatter
-    logger.add_handler(handler)
+    handler.setFormatter(formatter)
+
+    que = Queue()
+    logger.addHandler(QueueHandler(que))
+    logger.setLevel(level)
+
+    listener = QueueListener(que, handler)
+    listener.start()
+
+    # for correct stop listener.
+    atexit.register(listener.stop)
+
     return logger
