@@ -106,3 +106,11 @@ class UserService:
                 f'Пользователь "{telegram_id}" - "{user.username}" удален.'
             )
             return user.to_read_model(UserSchema)
+
+    async def get_user_by_id(self, telegram_id: int) -> UserSchema | None:
+        """Gets a user by telegram id or None."""
+        async with self.uow:
+            user = await self.uow.user.get(telegram_id)
+            if user is None:
+                return None
+            return user.to_read_model(UserSchema)
