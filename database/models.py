@@ -19,7 +19,6 @@ from database.db import Base
 
 intpk = Annotated[int, mapped_column(primary_key=True)]
 NameStr = Annotated[str, mapped_column(String(50))]
-PswStr = Annotated[str, mapped_column(String(50))]
 
 
 class WeekDays(Enum):
