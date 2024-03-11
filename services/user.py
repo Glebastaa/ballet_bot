@@ -1,5 +1,3 @@
-from typing import Type
-
 from database.models import UserRoles
 from exceptions import UserAlreadyExistsError
 from logger_config import setup_logger
@@ -12,16 +10,16 @@ logger = setup_logger('user')
 
 class UserService:
     def __init__(self) -> None:
-        self.uow: Type[UnitOfWork] = UnitOfWork()
+        self.uow: UnitOfWork = UnitOfWork()
 
     async def _is_already_exists(
             self,
             telegram_id: int,
             username: str,
-            uow: Type[UnitOfWork]
+            uow: UnitOfWork
     ) -> None:
         id_check = await uow.user.get(telegram_id)
-        name_check = await uow.user.get_all({'username': username})
+        name_check = await uow.user.get_all(username=username)
         if id_check or name_check:
             logger.error(
                 f'Пользователь "{telegram_id}" уже существует. '
@@ -59,9 +57,12 @@ class UserService:
             role: UserRoles
     ) -> UserSchema:
         """Change a role."""
-        role = UserSchemaUpdateRole(role=role)
+        role_in = UserSchemaUpdateRole(role=role)
         async with self.uow:
-            user = await self.uow.user.update(telegram_id, role.model_dump())
+            user = await self.uow.user.update(
+                telegram_id,
+                role_in.model_dump()
+            )
             await self.uow.commit()
             logger.info(
                 f'Роль пользователя "{telegram_id}" - '
@@ -74,9 +75,7 @@ class UserService:
     ) -> list[UserSchema]:
         """Gets all visitors."""
         async with self.uow:
-            visitors = await self.uow.user.get_all(
-                {'role': UserRoles.VISITOR}
-            )
+            visitors = await self.uow.user.get_all(role=UserRoles.VISITOR)
             return [visitor.to_read_model(UserSchema) for visitor in visitors]
 
     async def delete_all_visitors(self) -> None:
@@ -92,9 +91,7 @@ class UserService:
         """Gets all users by roles."""
         UserSchemaUpdateRole(role=role)  # some validation.
         async with self.uow:
-            users = await self.uow.user.get_all(
-                {'role': role}
-            )
+            users = await self.uow.user.get_all(role=role)
             return [user.to_read_model(UserSchema) for user in users]
 
     async def delete_user(self, telegram_id: int) -> UserSchema:

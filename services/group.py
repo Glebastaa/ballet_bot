@@ -18,7 +18,7 @@ logger = setup_logger('group')
 
 class GroupService:
     def __init__(self) -> None:
-        self.uow = UnitOfWork()
+        self.uow: UnitOfWork = UnitOfWork()
 
     async def _is_already_exists(
             self,
@@ -32,7 +32,7 @@ class GroupService:
             'name': group_name,
             'is_individual': is_individual
         }
-        if await uow.group.get_all(filter_by=filter_by):
+        if await uow.group.get_all(**filter_by):
             logger.error(
                 f'Группа "{group_name}" в студии по id {studio_id} '
                 'уже существует.'
@@ -51,10 +51,8 @@ class GroupService:
             schedule_id: int | None = None
     ) -> None:
         schedules = await uow.schedule.get_all(
-            {
-                'room_id': room_id,
-                'start_date': start_date
-            }
+            room_id=room_id,
+            start_date=start_date
         )
         new_time = datetime.combine(datetime.today(), start_time)
         td = timedelta(hours=LESSON_DURATION)
@@ -86,7 +84,7 @@ class GroupService:
             self,
             group_name: str,
             studio_id: int,
-            notes: str = None,
+            notes: str | None = None,
             is_individual: bool = False
     ) -> GroupSchema:
         "Add a new group or a individual lesson."
@@ -138,7 +136,7 @@ class GroupService:
                 f'Рассписание "{start_time}" - "{start_date.value}" добавлено '
                 f'для группы {group_id}'
             )
-            return schedule
+            return schedule.to_read_model(ScheduleSchema)
 
     async def get_groups(
             self,
@@ -148,10 +146,8 @@ class GroupService:
         "Gets list of groups or list of individual lessons."
         async with self.uow:
             groups = await self.uow.group.get_all(
-                {
-                    'studio_id': studio_id,
-                    'is_individual': is_individual
-                }
+                studio_id=studio_id,
+                is_individual=is_individual
             )
             return [group.to_read_model(GroupSchema) for group in groups]
 
@@ -202,9 +198,7 @@ class GroupService:
     ) -> list[list[str]]:
         """Get datetime."""
         async with self.uow:
-            schedules = await self.uow.schedule.get_all(
-                {'group_id': group_id}
-            )
+            schedules = await self.uow.schedule.get_all(group_id=group_id)
             schedules = [s.to_read_model(ScheduleSchema) for s in schedules]
             return [[(await self.uow.room.get(s.room_id)).name,
                      s.start_time.strftime('%H:%M'),
@@ -225,7 +219,7 @@ class GroupService:
             old_schedule = await self.uow.schedule.get(schedule_id)
             if not new_date:
                 new_date = old_schedule.start_date
-            elif not new_time:
+            if not new_time:
                 new_time = old_schedule.start_time
             await self._time_not_busy(
                 room_id=old_schedule.room_id,

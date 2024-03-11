@@ -14,7 +14,7 @@ logger = setup_logger('student')
 
 class StudentService:
     def __init__(self) -> None:
-        self.uow = UnitOfWork()
+        self.uow: UnitOfWork = UnitOfWork()
 
     async def add_student(self, student_name: str) -> StudentSchema:
         """Create a new student in db."""
@@ -101,7 +101,7 @@ class StudentService:
             await self.uow.commit()
             logger.info(
                 f'У ученика по id: {student_id} изменено имя на "{new_name}"')
-            return student
+            return student.to_read_model(StudentSchema)
 
     async def delete_student(
             self,

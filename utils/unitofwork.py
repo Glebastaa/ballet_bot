@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Type
 
 from database.db import async_session_maker, engine
+from database.models import Group, Room, Schedule, Student, Studio, User
 from repositories.group import GroupRepository
 from repositories.room import RoomRepository
 from repositories.schedule import ScheduleRepository
@@ -11,12 +11,12 @@ from repositories.user import UserRepository
 
 
 class IUnitOfWork(ABC):
-    studio: Type[StudioRepository]
-    group: Type[GroupRepository]
-    schedule: Type[ScheduleRepository]
-    student: Type[StudentRepository]
-    room: Type[RoomRepository]
-    user: Type[UserRepository]
+    studio: StudioRepository
+    group: GroupRepository
+    schedule: ScheduleRepository
+    student: StudentRepository
+    room: RoomRepository
+    user: UserRepository
 
     @abstractmethod
     def __init__(self):
@@ -48,12 +48,12 @@ class UnitOfWork(IUnitOfWork):
     async def __aenter__(self):
         self.session = self.session_factory()
 
-        self.studio = StudioRepository(self.session)
-        self.group = GroupRepository(self.session)
-        self.schedule = ScheduleRepository(self.session)
-        self.student = StudentRepository(self.session)
-        self.room = RoomRepository(self.session)
-        self.user = UserRepository(self.session)
+        self.studio = StudioRepository(Studio, self.session)
+        self.group = GroupRepository(Group, self.session)
+        self.schedule = ScheduleRepository(Schedule, self.session)
+        self.student = StudentRepository(Student, self.session)
+        self.room = RoomRepository(Room, self.session)
+        self.user = UserRepository(User, self.session)
 
     async def __aexit__(self, *args):
         await self.rollback()

@@ -1,6 +1,6 @@
 from datetime import time
 from enum import Enum
-from typing import Annotated
+from typing import Annotated, Type, TypeVar
 from pydantic import BaseModel
 
 from sqlalchemy import (
@@ -19,7 +19,7 @@ from database.db import Base
 
 intpk = Annotated[int, mapped_column(primary_key=True)]
 NameStr = Annotated[str, mapped_column(String(50))]
-PswStr = Annotated[str, mapped_column(String(50))]
+SchemaResponse = TypeVar('SchemaResponse', bound=BaseModel)
 
 
 class WeekDays(Enum):
@@ -51,7 +51,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(50), unique=True)
     role: Mapped[UserRoles]
 
-    def to_read_model(self, schema: BaseModel) -> BaseModel:
+    def to_read_model(self, schema):
         return schema(
             id=self.id,
             username=self.username,
@@ -76,7 +76,7 @@ class Studio(Base):
         cascade='all, delete'
     )
 
-    def to_read_model(self, schema: BaseModel) -> BaseModel:
+    def to_read_model(self, schema):
         return schema(
             id=self.id,
             name=self.name
@@ -99,7 +99,7 @@ class Room(Base):
         cascade='all, delete'
     )
 
-    def to_read_model(self, schema: BaseModel) -> BaseModel:
+    def to_read_model(self, schema):
         return schema(
             id=self.id,
             name=self.name,
@@ -123,7 +123,7 @@ class Schedule(Base):
     group: Mapped['Group'] = relationship(back_populates='schedules')
     room: Mapped['Room'] = relationship(back_populates='schedules')
 
-    def to_read_model(self, schema: BaseModel) -> BaseModel:
+    def to_read_model(self, schema):
         return schema(
             id=self.id,
             group_id=self.group_id,
@@ -157,7 +157,7 @@ class Group(Base):
         back_populates='groups'
     )
 
-    def to_read_model(self, schema: BaseModel) -> BaseModel:
+    def to_read_model(self, schema):
         return schema(
             id=self.id,
             name=self.name,
@@ -179,7 +179,7 @@ class Student(Base):
         back_populates='students'
     )
 
-    def to_read_model(self, schema: BaseModel) -> BaseModel:
+    def to_read_model(self, schema: Type[SchemaResponse]) -> SchemaResponse:
         return schema(
             id=self.id,
             name=self.name,
