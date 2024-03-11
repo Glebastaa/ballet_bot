@@ -9,7 +9,7 @@ logger = setup_logger('room')
 
 class RoomService:
     def __init__(self) -> None:
-        self.uow = UnitOfWork()
+        self.uow: UnitOfWork = UnitOfWork()
 
     async def _is_already_exists(
             self,
@@ -21,7 +21,7 @@ class RoomService:
             'studio_id': studio_id,
             'name': room_name
         }
-        room = await uow.room.get_all(filter_by)
+        room = await uow.room.get_all(**filter_by)
         if room:
             logger.error(f'Зал "{room_name}" уже существует.')
             raise EntityAlreadyExists(
@@ -42,7 +42,7 @@ class RoomService:
     async def get_rooms(self, studio_id: int) -> list[RoomSchema]:
         """Gets list of rooms from studio."""
         async with self.uow:
-            rooms = await self.uow.room.get_all({'studio_id': studio_id})
+            rooms = await self.uow.room.get_all(studio_id=studio_id)
             return [room.to_read_model(RoomSchema) for room in rooms]
 
     async def edit_room(self, room_id: int, new_name: str) -> RoomSchema:

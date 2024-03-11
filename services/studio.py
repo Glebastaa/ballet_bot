@@ -1,5 +1,3 @@
-from typing import Type
-
 from exceptions import EntityAlreadyExists
 from logger_config import setup_logger
 from schemas.studio import StudioSchema, StudioSchemaAdd, StudioSchemaUpdate
@@ -11,10 +9,10 @@ logger = setup_logger('studio')
 
 class StudioService:
     def __init__(self) -> None:
-        self.uow: Type[UnitOfWork] = UnitOfWork()
+        self.uow: UnitOfWork = UnitOfWork()
 
     async def _is_already_exists(self, name: str, uow: UnitOfWork) -> None:
-        if await self.uow.studio.get_all({'name': name}):
+        if await self.uow.studio.get_all(name=name):
             logger.error(f'Студия "{name}" уже существует.')
             raise EntityAlreadyExists(
                 'Studio',
