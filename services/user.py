@@ -18,7 +18,7 @@ class UserService:
             username: str,
             uow: UnitOfWork
     ) -> None:
-        id_check = await uow.user.get(telegram_id)
+        id_check = await uow.user.get_all(id=telegram_id)
         name_check = await uow.user.get_all(username=username)
         if id_check or name_check:
             logger.error(
@@ -60,8 +60,8 @@ class UserService:
         role_in = UserSchemaUpdateRole(role=role)
         async with self.uow:
             user = await self.uow.user.update(
-                telegram_id,
-                role_in.model_dump()
+                data=role_in.model_dump(),
+                id=telegram_id
             )
             await self.uow.commit()
             logger.info(
@@ -97,7 +97,7 @@ class UserService:
     async def delete_user(self, telegram_id: int) -> UserSchema:
         """Delete a user from db."""
         async with self.uow:
-            user = await self.uow.user.delete(telegram_id)
+            user = await self.uow.user.delete(id=telegram_id)
             await self.uow.commit()
             logger.info(
                 f'Пользователь "{telegram_id}" - "{user.username}" удален.'
@@ -107,7 +107,7 @@ class UserService:
     async def get_user_by_id(self, telegram_id: int) -> UserSchema | None:
         """Gets a user by telegram id or None."""
         async with self.uow:
-            user = await self.uow.user.get(telegram_id)
+            user = await self.uow.user.get(id=telegram_id)
             if user is None:
                 return None
             return user.to_read_model(UserSchema)

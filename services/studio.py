@@ -45,8 +45,8 @@ class StudioService:
         async with self.uow:
             await self._is_already_exists(new_name, self.uow)
             studio = await self.uow.studio.update(
-                studio_id,
-                validated_data.model_dump()
+                data=validated_data.model_dump(),
+                id=studio_id
             )
             await self.uow.commit()
             logger.info(
@@ -56,7 +56,7 @@ class StudioService:
     async def delete_studio(self, studio_id: int) -> str:
         """Delete a studio by studio id."""
         async with self.uow:
-            studio = await self.uow.studio.delete(studio_id)
+            studio = await self.uow.studio.delete(id=studio_id)
             await self.uow.commit()
             logger.info(f'Студия "{studio.name}" удалена.')
             return studio.name

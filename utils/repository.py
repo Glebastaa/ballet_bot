@@ -19,15 +19,15 @@ class AbstractRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete(self, pk_or_obj: int | Any):
+    async def delete(self, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
-    async def update(self, pk: int, data: Any):
+    async def update(self, data: Any, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
-    async def get(self, pk: int):
+    async def get(self, **kwargs):
         raise NotImplementedError
 
 
@@ -47,31 +47,31 @@ class SQLAlchemyRepository(AbstractRepository, Generic[ModelType]):
         res = await self.session.execute(stmt)
         return res.scalar_one()
 
-    async def get(self, id: int) -> ModelType:
+    async def get(self, **filters) -> ModelType:
         """Gets a entity by its id."""
-        stmt = select(self.model).filter_by(id=id)
+        stmt = select(self.model).filter_by(**filters)
         res = await self.session.execute(stmt)
         return res.scalar_one()
 
-    async def get_all(self, **filter_by) -> Sequence[ModelType]:
+    async def get_all(self, **filters) -> Sequence[ModelType]:
         """Gets all entities or by filter."""
         stmt = select(self.model)
-        if filter_by:
-            stmt = stmt.filter_by(**filter_by)
+        if filters:
+            stmt = stmt.filter_by(**filters)
         res = await self.session.execute(stmt)
         return res.scalars().all()
 
-    async def delete(self, id: int) -> ModelType:
+    async def delete(self, **filters) -> ModelType:
         """Delete an existing entity."""
-        stmt = select(self.model).filter_by(id=id)
+        stmt = select(self.model).filter_by(**filters)
         res = await self.session.scalar(stmt)
         await self.session.delete(res)
         return res
 
-    async def update(self, id: int, data: dict[str, Any]) -> ModelType:
+    async def update(self, data: dict[str, Any], **filters) -> ModelType:
         """Update an existing entity."""
         stmt = update(self.model).values(**data).filter_by(
-            id=id).returning(self.model)
+            **filters).returning(self.model)
         res = await self.session.execute(stmt)
         return res.scalar_one()
 

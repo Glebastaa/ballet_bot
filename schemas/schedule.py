@@ -11,12 +11,10 @@ class ScheduleSchemaBase(BaseModel):
 
 class ScheduleSchemaAdd(ScheduleSchemaBase):
     group_id: int
-    room_id: int
 
 
 class ScheduleSchema(ScheduleSchemaBase):
     group_id: int
-    room_id: int
 
     class Config:
         from_attributes = True
