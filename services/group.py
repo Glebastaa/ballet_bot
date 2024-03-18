@@ -27,31 +27,31 @@ class GroupService:
             is_individual: bool,
             group_name: str | None = None
     ) -> None:
-        filter_by = {
+        filters = {
             'studio_id': studio_id,
             'name': group_name,
             'is_individual': is_individual
         }
-        if await uow.group.get_all(**filter_by):
+        if await uow.group.get_all(**filters):
             logger.error(
                 f'Группа "{group_name}" в студии по id {studio_id} '
                 'уже существует.'
             )
             raise EntityAlreadyExists(
                 'Group',
-                filter_by
+                filters
             )
 
     async def _time_not_busy(
             self,
-            room_id: int,
+            group_id: int,
             start_time: time,
             start_date: WeekDays,
             uow: UnitOfWork,
             schedule_id: int | None = None
     ) -> None:
         schedules = await uow.schedule.get_all(
-            room_id=room_id,
+            group_id=group_id,
             start_date=start_date
         )
         new_time = datetime.combine(datetime.today(), start_time)
@@ -111,21 +111,19 @@ class GroupService:
     async def add_schedule_to_group(
             self,
             group_id: int,
-            room_id: int,
             start_time: time,
             start_date: WeekDays
     ) -> ScheduleSchema:
         "Add a schedule to group."
         validated_data = ScheduleSchemaAdd(
             group_id=group_id,
-            room_id=room_id,
             start_time=start_time,
             start_date=start_date
         )
         async with self.uow:
             # Check that the time is not busy.
             await self._time_not_busy(
-                room_id=room_id,
+                group_id=group_id,
                 start_time=start_time,
                 start_date=start_date,
                 uow=self.uow
@@ -163,7 +161,7 @@ class GroupService:
             is_individual=is_individual
         )
         async with self.uow:
-            old_group = await self.uow.group.get(group_id)
+            old_group = await self.uow.group.get(id=group_id)
             await self._is_already_exists(
                 group_name=new_group_name,
                 studio_id=old_group.studio_id,
@@ -171,8 +169,8 @@ class GroupService:
                 uow=self.uow
             )
             group = await self.uow.group.update(
-                group_id,
-                validated_group.model_dump()
+                data=validated_group.model_dump(),
+                id=group_id
             )
             await self.uow.commit()
             logger.info(
@@ -187,7 +185,7 @@ class GroupService:
     ) -> str:
         """Delete a group or inividual lesson."""
         async with self.uow:
-            group = await self.uow.group.delete(group_id)
+            group = await self.uow.group.delete(id=group_id)
             await self.uow.commit()
             logger.info(f'Группа "{group.name}" удалена.')
             return group.to_read_model(GroupSchema).name
@@ -196,12 +194,11 @@ class GroupService:
             self,
             group_id: int
     ) -> list[list[str]]:
-        """Get datetime."""
+        """Gets a datetime."""
         async with self.uow:
             schedules = await self.uow.schedule.get_all(group_id=group_id)
             schedules = [s.to_read_model(ScheduleSchema) for s in schedules]
-            return [[(await self.uow.room.get(s.room_id)).name,
-                     s.start_time.strftime('%H:%M'),
+            return [[s.start_time.strftime('%H:%M'),
                      s.start_date.value] for s in schedules]
 
     async def edit_date_time_group(
@@ -216,13 +213,13 @@ class GroupService:
             start_time=new_time
         )
         async with self.uow:
-            old_schedule = await self.uow.schedule.get(schedule_id)
+            old_schedule = await self.uow.schedule.get(id=schedule_id)
             if not new_date:
                 new_date = old_schedule.start_date
             if not new_time:
                 new_time = old_schedule.start_time
             await self._time_not_busy(
-                room_id=old_schedule.room_id,
+                group_id=old_schedule.group_id,
                 start_time=new_time,
                 start_date=new_date,
                 uow=self.uow,
@@ -230,8 +227,8 @@ class GroupService:
             )
 
             schedule = await self.uow.schedule.update(
-                schedule_id,
-                validated_data.model_dump(exclude_none=True)
+                data=validated_data.model_dump(exclude_none=True),
+                id=schedule_id
             )
             await self.uow.commit()
             logger.info(
@@ -248,7 +245,7 @@ class GroupService:
     ) -> list[GroupSchema]:
         """Gets a list of groups by student id."""
         async with self.uow:
-            student = await self.uow.student.get(student_id)
+            student = await self.uow.student.get(id=student_id)
             await self.uow.session.refresh(student, attribute_names=['groups'])
             groups = [
                 group.to_read_model(GroupSchema) for group in student.groups

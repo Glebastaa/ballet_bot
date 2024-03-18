@@ -51,7 +51,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(50), unique=True)
     role: Mapped[UserRoles]
 
-    def to_read_model(self, schema):
+    def to_read_model(self, schema: Type[SchemaResponse]) -> SchemaResponse:
         return schema(
             id=self.id,
             username=self.username,
@@ -70,40 +70,11 @@ class Studio(Base):
         lazy='selectin',
         cascade='all, delete'
     )
-    rooms: Mapped[list['Room']] = relationship(
-        back_populates='studio',
-        lazy='selectin',
-        cascade='all, delete'
-    )
 
-    def to_read_model(self, schema):
+    def to_read_model(self, schema: Type[SchemaResponse]) -> SchemaResponse:
         return schema(
             id=self.id,
             name=self.name
-        )
-
-
-class Room(Base):
-    __tablename__ = 'rooms'
-    __table_args__ = (
-        UniqueConstraint('name', 'studio_id'),
-    )
-
-    id: Mapped[intpk]
-    name: Mapped[NameStr]
-    studio_id: Mapped[int] = mapped_column(ForeignKey('studios.id'))
-
-    studio: Mapped['Studio'] = relationship(back_populates='rooms')
-    schedules: Mapped['Schedule'] = relationship(
-        back_populates='room',
-        cascade='all, delete'
-    )
-
-    def to_read_model(self, schema):
-        return schema(
-            id=self.id,
-            name=self.name,
-            studio_id=self.studio_id
         )
 
 
@@ -114,22 +85,17 @@ class Schedule(Base):
     group_id: Mapped[int] = mapped_column(
         ForeignKey('groups.id')
     )
-    room_id: Mapped[int] = mapped_column(
-        ForeignKey('rooms.id')
-    )
     start_time: Mapped[time]
     start_date: Mapped[WeekDays]
 
     group: Mapped['Group'] = relationship(back_populates='schedules')
-    room: Mapped['Room'] = relationship(back_populates='schedules')
 
-    def to_read_model(self, schema):
+    def to_read_model(self, schema: Type[SchemaResponse]) -> SchemaResponse:
         return schema(
             id=self.id,
             group_id=self.group_id,
             start_time=self.start_time,
-            start_date=self.start_date,
-            room_id=self.room_id
+            start_date=self.start_date
         )
 
 
@@ -157,7 +123,7 @@ class Group(Base):
         back_populates='groups'
     )
 
-    def to_read_model(self, schema):
+    def to_read_model(self, schema: Type[SchemaResponse]) -> SchemaResponse:
         return schema(
             id=self.id,
             name=self.name,

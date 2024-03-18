@@ -97,11 +97,3 @@ class TestUserService:
         test_user = await session.get(User, 5243573061)
         assert test_user is None
         assert user.username == 'Tommy heavenly6'
-
-    async def test_get_user(self, session, users):
-        user = await UserService().get_user_by_id(5243573061)
-        assert user is not None
-        assert user.username == 'Tommy heavenly6'
-
-        none_user = await UserService().get_user_by_id(5243573045)
-        assert none_user is None

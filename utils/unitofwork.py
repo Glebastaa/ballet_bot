@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
 
 from database.db import async_session_maker, engine
-from database.models import Group, Room, Schedule, Student, Studio, User
+from database.models import Group, Schedule, Student, Studio, User
 from repositories.group import GroupRepository
-from repositories.room import RoomRepository
 from repositories.schedule import ScheduleRepository
 from repositories.student import StudentRepository
 from repositories.studio import StudioRepository
@@ -15,7 +14,6 @@ class IUnitOfWork(ABC):
     group: GroupRepository
     schedule: ScheduleRepository
     student: StudentRepository
-    room: RoomRepository
     user: UserRepository
 
     @abstractmethod
@@ -52,7 +50,6 @@ class UnitOfWork(IUnitOfWork):
         self.group = GroupRepository(Group, self.session)
         self.schedule = ScheduleRepository(Schedule, self.session)
         self.student = StudentRepository(Student, self.session)
-        self.room = RoomRepository(Room, self.session)
         self.user = UserRepository(User, self.session)
 
     async def __aexit__(self, *args):

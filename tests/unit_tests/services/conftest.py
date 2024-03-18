@@ -8,7 +8,6 @@ from sqlalchemy.orm import selectinload
 
 from database.models import (
     Group,
-    Room,
     Schedule,
     Student,
     Studio,
@@ -29,21 +28,10 @@ async def studios(session: AsyncSession):
     await session.commit()
 
 
-# Rooms.
-
-@pytest.fixture
-async def rooms(session: AsyncSession, studios):
-    room_1 = Room(name='Столярная', studio_id=1)
-    room_2 = Room(name='Мастерская', studio_id=1)
-    room_3 = Room(name='Пыточная', studio_id=1)
-    session.add_all([room_1, room_2, room_3])
-    await session.commit()
-
-
 # Group.
 
 @pytest.fixture
-async def groups(session, rooms):
+async def groups(session, studios):
     group_1 = Group(
         name='Коноха',
         studio_id=1,
@@ -64,31 +52,32 @@ async def groups(session, rooms):
     )
     schedule_1 = Schedule(
         group_id=1,
-        room_id=1,
         start_time=datetime.strptime('10:23', "%H:%M").time(),
         start_date=WeekDays.monday
     )
     schedule_2 = Schedule(
         group_id=2,
-        room_id=1,
         start_time=datetime.strptime('16:43', "%H:%M").time(),
         start_date=WeekDays.friday
     )
     schedule_3 = Schedule(
         group_id=2,
-        room_id=1,
         start_time=datetime.strptime('10:43', "%H:%M").time(),
         start_date=WeekDays.sunday
     )
     schedule_4 = Schedule(
         group_id=2,
-        room_id=1,
         start_time=datetime.strptime('18:43', "%H:%M").time(),
+        start_date=WeekDays.monday
+    )
+    schedule_5 = Schedule(
+        group_id=2,
+        start_time=datetime.strptime('10:43', "%H:%M").time(),
         start_date=WeekDays.monday
     )
     session.add_all(
         [group_1, group_2, group_3,
-         schedule_1, schedule_2, schedule_3, schedule_4]
+         schedule_1, schedule_2, schedule_3, schedule_4, schedule_5]
     )
     await session.commit()
 

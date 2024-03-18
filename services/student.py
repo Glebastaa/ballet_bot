@@ -35,8 +35,8 @@ class StudentService:
     ) -> None:
         """Add a student to group."""
         async with self.uow:
-            student = await self.uow.student.get(student_id)
-            group = await self.uow.group.get(group_id)
+            student = await self.uow.student.get(id=student_id)
+            group = await self.uow.group.get(id=group_id)
 
             # if try add to group with is_individual=True or vice versa.
             if group.is_individual != is_individual:
@@ -57,7 +57,7 @@ class StudentService:
     ) -> list[StudentSchema]:
         """Gets list of students from the group."""
         async with self.uow:
-            group = await self.uow.group.get(group_id)
+            group = await self.uow.group.get(id=group_id)
             await self.uow.session.refresh(group, attribute_names=['students'])
             return [st.to_read_model(StudentSchema) for st in group.students]
 
@@ -76,8 +76,8 @@ class StudentService:
     ) -> str:
         """Delete a student from group."""
         async with self.uow:
-            student = await self.uow.student.get(student_id)
-            group = await self.uow.group.get(group_id)
+            student = await self.uow.student.get(id=student_id)
+            group = await self.uow.group.get(id=group_id)
             await self.uow.session.refresh(group, attribute_names=['students'])
             group.students.remove(student)
             await self.uow.commit()
@@ -95,8 +95,8 @@ class StudentService:
         validated_data = StudentSchemaUpdate(name=new_name)
         async with self.uow:
             student = await self.uow.student.update(
-                student_id,
-                validated_data.model_dump(exclude_none=True)
+                data=validated_data.model_dump(exclude_none=True),
+                id=student_id
             )
             await self.uow.commit()
             logger.info(
@@ -109,7 +109,7 @@ class StudentService:
     ) -> str:
         """Delete a student."""
         async with self.uow:
-            student = await self.uow.student.delete(student_id)
+            student = await self.uow.student.delete(id=student_id)
             await self.uow.commit()
             logger.info(f'Ученик "{student.name}" удален.')
             return student.name

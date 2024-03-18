@@ -105,32 +105,27 @@ class TestGroupService:
         assert indiv_2.is_individual
 
     @pytest.mark.parametrize(
-        'group_id,room_id, start_time, start_date, expectation',
+        'group_id, start_time, start_date, expectation',
         [
-            [3, 3, datetime.strptime('10:23', "%H:%M").time(),
+            [3, datetime.strptime('10:23', "%H:%M").time(),
              WeekDays.monday, does_not_raise()],
-            [3, 3, datetime.strptime('0:23', "%H:%M").time(),
+            [2, datetime.strptime('0:23', "%H:%M").time(),
              WeekDays.monday, does_not_raise()],
-            [3, 1, datetime.strptime('10:23', "%H:%M").time(),
-             WeekDays.monday, pytest.raises(ScheduleTimeInsertionError)],
-            [3, 1, datetime.strptime('10:23', "%H:%M").time(),
+            [1, datetime.strptime('10:23', "%H:%M").time(),
              WeekDays.friday, does_not_raise()],
-            [3, 1, datetime.strptime('09:23', "%H:%M").time(),
+            [1, datetime.strptime('09:23', "%H:%M").time(),
              WeekDays.monday, does_not_raise()],
-            [3, 1, datetime.strptime('10:43', "%H:%M").time(),
+            [1, datetime.strptime('10:43', "%H:%M").time(),
              WeekDays.monday, pytest.raises(ScheduleTimeInsertionError)],
-            [3, 1, datetime.strptime('10:03', "%H:%M").time(),
+            [1, datetime.strptime('10:03', "%H:%M").time(),
              WeekDays.monday, pytest.raises(ScheduleTimeInsertionError)],
-            [3, 2, datetime.strptime('10:23', "%H:%M").time(),
-             WeekDays.monday, does_not_raise()],
-            [3, 2, datetime.strptime('10:23', "%H:%M").time(),
+            [3, datetime.strptime('10:23', "%H:%M").time(),
              WeekDays('Четверг'), does_not_raise()]
         ])
     async def test_schedule_to_group(
         self,
         session,
         groups,
-        room_id,
         group_id,
         start_time,
         start_date,
@@ -139,7 +134,6 @@ class TestGroupService:
         with expectation:
             await GroupService().add_schedule_to_group(
                 group_id,
-                room_id,
                 start_time,
                 start_date
             )
@@ -147,8 +141,6 @@ class TestGroupService:
                     session, group_id)
             for schedule in schedules:
                 assert schedule is not None
-                assert schedule.start_date.value == start_date.value
-                assert schedule.start_time == start_time
 
     async def test_add_duplicate_in_same_studio(self, session, groups):
         with pytest.raises(EntityAlreadyExists):
@@ -209,15 +201,15 @@ class TestGroupService:
         dt_list = await GroupService().get_date_time_group(1)
 
         for dt in dt_list:
-            assert dt[1] == '10:23'
-            assert dt[2] == 'Понедельник'
-            assert dt[0] == 'Столярная'
+            assert dt[0] == '10:23'
+            assert dt[1] == 'Понедельник'
 
     @pytest.mark.parametrize(
             'schedule_id, new_date, expectation',
             [
                 [1, WeekDays.friday, does_not_raise()],
-                [1, WeekDays.sunday,
+                [1, WeekDays.sunday, does_not_raise()],
+                [5, WeekDays.sunday,
                  pytest.raises(ScheduleTimeInsertionError)],
             ]
     )
@@ -247,7 +239,9 @@ class TestGroupService:
             [
                 [1, datetime.strptime('10:43', "%H:%M").time(),
                  does_not_raise()],
-                [1, datetime.strptime('18:00', "%H:%M").time(),
+                [2, datetime.strptime('10:43', "%H:%M").time(),
+                 does_not_raise()],
+                [4, datetime.strptime('10:43', "%H:%M").time(),
                  pytest.raises(ScheduleTimeInsertionError)],
             ]
     )
