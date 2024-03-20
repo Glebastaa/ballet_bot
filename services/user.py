@@ -107,7 +107,7 @@ class UserService:
     async def get_user_by_id(self, telegram_id: int) -> UserSchema | None:
         """Gets a user by telegram id or None."""
         async with self.uow:
-            user = await self.uow.user.get(id=telegram_id)
-            if user is None:
+            user = await self.uow.user.get_all(id=telegram_id)
+            if not user:
                 return None
-            return user.to_read_model(UserSchema)
+            return user[0].to_read_model(UserSchema)

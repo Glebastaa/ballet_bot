@@ -1,3 +1,4 @@
+from types import NoneType
 from pydantic import ValidationError
 import pytest
 
@@ -7,6 +8,7 @@ from sqlalchemy import select
 from database.models import User, UserRoles
 from exceptions import UserAlreadyExistsError
 
+from schemas.user import UserSchema
 from services.user import UserService
 
 
@@ -81,7 +83,7 @@ class TestUserService:
         for user in users:
             assert user.id not in [5253573061, 5263573061]
 
-    async def test_get_user_by_id(self, session, users):
+    async def test_get_user_by_role(self, session, users):
         students = await UserService().get_users_by_role(UserRoles.STUDENT)
         owner = await UserService().get_users_by_role(UserRoles.OWNER)
 
@@ -97,3 +99,16 @@ class TestUserService:
         test_user = await session.get(User, 5243573061)
         assert test_user is None
         assert user.username == 'Tommy heavenly6'
+
+    @pytest.mark.parametrize(
+            'user_id, expect, expectation',
+            [
+                [5213573061, UserSchema, does_not_raise()],
+                [5213573062, NoneType, does_not_raise()]
+            ]
+    )
+    async def test_get_user_by_id(self, session, users, user_id, expect,
+                                  expectation):
+        with expectation:
+            user = await UserService().get_user_by_id(user_id)
+            assert isinstance(user, expect)
