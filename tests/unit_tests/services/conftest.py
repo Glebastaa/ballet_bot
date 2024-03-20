@@ -102,7 +102,17 @@ async def indivs(session, groups):
         notes=None,
         is_individual=True
     )
-    session.add_all([indiv_1, indiv_2, indiv_3])
+    schedule_6 = Schedule(
+        group_id=4,
+        start_time=datetime.strptime('8:00', "%H:%M").time(),
+        start_date=WeekDays.monday
+    )
+    schedule_7 = Schedule(
+        group_id=5,
+        start_time=datetime.strptime('19:00', "%H:%M").time(),
+        start_date=WeekDays.friday
+    )
+    session.add_all([indiv_1, indiv_2, indiv_3, schedule_6, schedule_7])
     await session.commit()
 
 # Student.
