@@ -1,4 +1,4 @@
-from exceptions import IndivIsFull, InvalidIsIndividual
+from exceptions import IndivIsFull, InvalidIsIndividual, StudentAlreadyInGroupError
 from logger_config import setup_logger
 from schemas.constant import MAX_STUDENTS_IN_INDIV
 from schemas.student import (
@@ -43,13 +43,15 @@ class StudentService:
                 raise InvalidIsIndividual
 
             await self.uow.session.refresh(group, attribute_names=['students'])
+            if student in group.students:
+                raise StudentAlreadyInGroupError({'student_id': student.id})
             if is_individual and len(group.students) >= MAX_STUDENTS_IN_INDIV:
                 raise IndivIsFull({'group_id': group.id})
             group.students.append(student)
+            await self.uow.commit()
             logger.info(
                 f'Ученик "{student.name}" добавлен в группу "{group.name}".'
             )
-            await self.uow.commit()
 
     async def get_students_from_group(
             self,
