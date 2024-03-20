@@ -47,3 +47,11 @@ class UserAlreadyExistsError(Exception):
     def __init__(self, entity_data: dict):
         message = f'User with data {entity_data} already exists.'
         super().__init__(message)
+
+
+class StudentAlreadyInGroupError(Exception):
+    """Raised when try to add a student already existing in the group."""
+
+    def __init__(self, entity_data: dict):
+        message = f'Student {entity_data} already in group.'
+        super().__init__(message)
