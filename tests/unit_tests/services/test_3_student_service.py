@@ -7,7 +7,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from database.models import Group, Student
-from exceptions import IndivIsFull, InvalidIsIndividual, StudentAlreadyInGroupError
+from exceptions import (
+    IndivIsFull,
+    InvalidIsIndividual,
+    StudentAlreadyInGroupError
+)
 from schemas.constant import NAME_MAX_LENGTH, NAME_MIN_LENGTH
 from services.student import StudentService
 
@@ -109,7 +113,8 @@ class TestStudentService:
             for student in group.students:
                 assert student.name in ['Саске', 'Сакура', 'Наруто']
 
-    async def test_add_already_in_group_student(self, session, students_groups):
+    async def test_add_already_in_group_student(
+            self, session, students_groups):
         with pytest.raises(StudentAlreadyInGroupError):
             await StudentService().add_student_to_group(1, 1)
 
