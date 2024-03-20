@@ -201,6 +201,24 @@ class GroupService:
             return [[s.start_time.strftime('%H:%M'),
                      s.start_date.value] for s in schedules]
 
+    async def get_date_time_indivs_by_studio(
+            self,
+            studio_id: int
+    ) -> list[list[str]]:
+        """Gets all datetime from studio."""
+        async with self.uow:
+            studio = await self.uow.studio.get(id=studio_id)
+            res: list = []
+            for group in studio.groups:
+                if group.is_individual:
+                    schedules = await self.uow.schedule.get_all(
+                        group_id=group.id
+                    )
+                    res.extend(schedules)
+            res = [r.to_read_model(ScheduleSchema) for r in res]
+            return [[schedules.start_time.strftime('%H:%M'),
+                     schedules.start_date.value] for schedules in res]
+
     async def edit_date_time_group(
             self,
             schedule_id: int,

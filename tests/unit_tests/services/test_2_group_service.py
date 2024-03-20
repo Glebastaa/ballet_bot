@@ -291,3 +291,12 @@ class TestGroupService:
 
             assert len(groups) == 1
             assert groups[0].name == gr_name
+
+    async def test_get_date_time_from_studion(
+            self,
+            session,
+            indivs
+    ):
+        date_time = await GroupService().get_date_time_indivs_by_studio(1)
+        assert isinstance(date_time, list)
+        assert len(date_time) == 2
