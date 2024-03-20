@@ -1,4 +1,8 @@
-from exceptions import IndivIsFull, InvalidIsIndividual, StudentAlreadyInGroupError
+from exceptions import (
+    IndivIsFull,
+    InvalidIsIndividual,
+    StudentAlreadyInGroupError
+)
 from logger_config import setup_logger
 from schemas.constant import MAX_STUDENTS_IN_INDIV
 from schemas.student import (
