@@ -111,3 +111,9 @@ class UserService:
             if not user:
                 return None
             return user[0].to_read_model(UserSchema)
+
+    async def get_user_id_by_username(self, username: str) -> int | None:
+        """Gets id by username or None."""
+        async with self.uow:
+            user = await self.uow.user.get_all(username=username)
+            return user[0].id if user else None
