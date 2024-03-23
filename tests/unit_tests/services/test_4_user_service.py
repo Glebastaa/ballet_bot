@@ -112,3 +112,12 @@ class TestUserService:
         with expectation:
             user = await UserService().get_user_by_id(user_id)
             assert isinstance(user, expect)
+
+    async def test_get_id_by_username(self, session, users):
+        user_id = await UserService().get_user_id_by_username(
+            'Сасуми Хиросава')
+        assert isinstance(user_id, int)
+        assert user_id == 5213573061
+
+        none_user = await UserService().get_user_id_by_username('Сасуми')
+        assert none_user is None
