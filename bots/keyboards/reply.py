@@ -27,7 +27,6 @@ main_info = ReplyKeyboardMarkup(
         ],
         [
             KeyboardButton(text="Список учеников"),
-            KeyboardButton(text="Хз-хз"),
         ]
     ],
     resize_keyboard=True,

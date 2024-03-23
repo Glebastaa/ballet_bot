@@ -40,7 +40,24 @@ class EditStudent(StatesGroup):
     new_student_name = State()
 
 
+class DeleteStudent(StatesGroup):
+    student_name = State()
+    student_id = State()
+    group_id = State()
+    group_name = State()
+
+
 class AddIndiv(StatesGroup):
     studio_name = State()
+    student_name = State()
     start_time = State()
     start_date = State()
+
+
+class RegUser(StatesGroup):
+    wait_for_name = State()
+
+
+class AdminPass(StatesGroup):
+    wait_for_pass = State()
+    switch_role = State()

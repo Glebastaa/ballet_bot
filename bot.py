@@ -1,9 +1,8 @@
 import asyncio
 import logging
 
-from handlers import bot_messages, commands, questions
-from callbacks import callbacks
-from middlewares.database import DatabaseMiddleware
+from bots.handlers import bot_messages, commands, questions
+from bots.callbacks import callback
 from aiogram import Bot, Dispatcher
 from config import settings
 
@@ -12,12 +11,12 @@ from config import settings
 async def main():
     bot = Bot(settings.bot_token.get_secret_value())
     dp = Dispatcher()
-    dp.update.middleware(DatabaseMiddleware())
+    dp.update.middleware()
 
     dp.include_routers(
         bot_messages.router,
         questions.router,
-        callbacks.router,
+        callback.router,
         commands.router,
     )
 
