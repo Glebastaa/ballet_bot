@@ -7,26 +7,39 @@ from bots.keyboards import inline, builders
 from services.group import GroupService
 from services.student import StudentService
 from utils.states import EditGroup
-from bots.callbacks.callbacks_studio import extract_data_from_callback
+
 
 router = Router()
 
 group_service = GroupService()
 student_service = StudentService()
 
+group_list = ['pick_group', 'delete_group', 'edit_group', 'add_shedule',
+              'add_student', 'list_students', 'delete_student', 'pick_groups',
+              'add_student3', 'delete_indiv']
+
+
+def extract_data_from_callback(
+        callback_query: CallbackQuery,
+        index1=3,
+        index2=4,
+):
+    data = callback_query.data.split('_')
+    return data[index1], int(data[index2])
+
 
 async def group_callback(
         callback: CallbackQuery,
         action: str,
-        state: FSMContext = None  # type: ignore
+        state: FSMContext | None = None
 ) -> None:
     """Manage callback requests related to groups."""
     group_name, group_id = extract_data_from_callback(callback)
     message = callback.message
 
     if action == 'pick_group':
-        studio_name = callback.data.split('_')[4]
-        studio_id: int = callback.data.split('_')[5]  # type: ignore
+        studio_name = callback.data.split('_')[5]
+        studio_id: int = callback.data.split('_')[6]  # type: ignore
         keyboard = inline.select_group_for_studio_kb(
             group_name, group_id, studio_name, studio_id
         )
@@ -38,7 +51,7 @@ async def group_callback(
         await message.answer(f'Группа {group_name} успешно удалена')
 
     elif action == 'edit_group':
-        studio_name = callback.data.split('_')[4]
+        studio_name = callback.data.split('_')[5]
         await state.update_data(group_name=group_name, group_id=group_id)
         await state.set_state(EditGroup.new_group_name)
         await message.edit_text(
@@ -47,8 +60,8 @@ async def group_callback(
         await message.edit_reply_markup(reply_markup=None)
 
     elif action == 'add_shedule':
-        studio_id: int = int(callback.data.split('_')[4])
-        studio_name: str = callback.data.split('_')[5]
+        studio_id: int = int(callback.data.split('_')[5])
+        studio_name: str = callback.data.split('_')[6]
         await state.update_data(
             group_name=group_name,
             group_id=group_id,
@@ -60,7 +73,7 @@ async def group_callback(
         )
         await message.edit_reply_markup(
             reply_markup=await builders.process_select_weekdays(
-                action='group'  # type: ignore
+                action='weekday_group'  # type: ignore
             )
         )
 
@@ -102,8 +115,8 @@ async def group_callback(
         await message.edit_reply_markup(reply_markup=keyboard)
 
     elif action == 'pick_groups':
-        #  student_name: str = callback.data.split('_')[4]
-        #  student_id: int = int(callback.data.split('_')[5])
+        #  student_name: str = callback.data.split('_')[5]
+        #  student_id: int = int(callback.data.split('_')[6])
         keyboard = inline.select_student_for_group_kb(group_name, group_id)
         await message.edit_text('Выбери сцука')
         await message.edit_reply_markup(reply_markup=keyboard)
@@ -129,7 +142,6 @@ async def group_callback(
             await message.edit_text(
                 f'Ученик {student_name} добавлен в группу {group_name}'
             )
-            await message.edit_reply_markup(reply_markup=None)
             await state.clear()
 
         except StudentAlreadyInGroupError:
@@ -143,67 +155,3 @@ async def group_callback(
         await group_service.delete_group(group_id)
         await message.answer(f'Индив {group_name} успешно удалена')
         await message.edit_reply_markup(reply_markup=None)
-
-
-# Выбор группы и взаимодействие с ней
-@router.callback_query(F.data.startswith('pick_group_'))
-async def select_group_for_studio(callback: CallbackQuery) -> None:
-    await group_callback(callback, 'pick_group')
-
-
-@router.callback_query(F.data.startswith('delete_group_'))
-async def call_delete_group(callback: CallbackQuery) -> None:
-    await group_callback(callback, 'delete_group')
-
-
-# Изменение имени группы и передача на шаг new_group_name
-@router.callback_query(F.data.startswith('edit_group_'))
-async def call_edit_group(callback: CallbackQuery, state: FSMContext) -> None:
-    await group_callback(callback, 'edit_group', state)
-
-
-@router.callback_query(F.data.startswith('add_shedule_'))
-async def call_add_shedule(callback: CallbackQuery, state: FSMContext) -> None:
-    await group_callback(callback, 'add_shedule', state)
-
-
-# Выбор ученика для добавления в группу
-@router.callback_query(F.data.startswith('add_student_'))
-async def call_add_student_to_group(
-    callback: CallbackQuery,
-    state: FSMContext
-) -> None:
-    await group_callback(callback, 'add_student', state)
-
-
-# Показ списка учеников для группы
-@router.callback_query(F.data.startswith('list_students_'))
-async def call_list_students(callback: CallbackQuery) -> None:
-    await group_callback(callback, 'list_students')
-
-
-# Удаление ученика из группы
-@router.callback_query(F.data.startswith('delete_student_'))
-async def call_delete_student_from_group(
-    callback: CallbackQuery,
-    state: FSMContext
-) -> None:
-    await group_callback(callback, 'delete_student', state)
-
-
-@router.callback_query(F.data.startswith('pick_groups_'))
-async def call_pick_groups_for_student(callback: CallbackQuery) -> None:
-    await group_callback(callback, 'pick_groups')
-
-
-@router.callback_query(F.data.startswith('add_student3_'))
-async def call_add_student_to_group_ty_main_menu(
-    callback: CallbackQuery,
-    state: FSMContext
-) -> None:
-    await group_callback(callback, 'add_student3', state)
-
-
-@router.callback_query(F.data.startswith('delete_indiv_'))
-async def call_delete_indiv_from_studio(callback: CallbackQuery) -> None:
-    await group_callback(callback, 'delete_indiv')

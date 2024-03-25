@@ -3,7 +3,6 @@ from typing import List
 
 from aiogram.types import Message
 
-from database.models import UserRoles
 from services.user import UserService
 
 
@@ -31,7 +30,7 @@ def registered_user_required(func):
 def roles_user_required(allowed_roles: List[str]):
     def decorator(func):
         @wraps(func)
-        async def wrapped(message: Message):
+        async def wrapped(message: Message, *args, **kwargs):
             user_id = message.from_user.id
             user_role = await user_service.get_user_by_id(telegram_id=user_id)
             if user_role.role.value not in allowed_roles:
@@ -40,6 +39,10 @@ def roles_user_required(allowed_roles: List[str]):
                     'Если это ошибка, обратитесь к руководителю студии'
                 )
                 return
-            return await func(message)
+            state = kwargs.get('state')
+            if state:
+                return await func(message, state, *args)
+            else:
+                return await func(message, *args, **kwargs)
         return wrapped
     return decorator

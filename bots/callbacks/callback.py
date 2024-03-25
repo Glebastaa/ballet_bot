@@ -1,4 +1,5 @@
 from aiogram import Router
+
 from bots.callbacks import (
     callbacks_studio, callbacks_group,
     callbacks_student, callbacks_weekday,

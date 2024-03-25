@@ -18,7 +18,7 @@ async def add_button_to_kb(
         kb.add(InlineKeyboardButton(
             text=item.name,
             callback_data=(
-                f'{action}_{item.name}_{item.id}_{extra_data}_{extra_data2}'
+                f'call_{action}_{item.name}_{item.id}_{extra_data}_{extra_data2}'
             )
         ),
         )
@@ -33,9 +33,8 @@ async def show_list_studios_menu(action: str):
 
 async def show_list_groups_menu(action: str, studio_name: str, studio_id: int):
     return await add_button_to_kb(
-        InlineKeyboardBuilder(),
-        await GroupService().get_groups(studio_id),
-        action,
+        InlineKeyboardBuilder(), await GroupService().get_groups(studio_id),
+        action=action,
         extra_data=studio_name,
         extra_data2=studio_id
     )

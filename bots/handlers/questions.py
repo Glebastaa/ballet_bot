@@ -4,6 +4,7 @@ from aiogram import Router
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
+from schemas.group import GroupSchema
 from database.models import WeekDays, UserRoles
 from exceptions import (
     EntityAlreadyExists,
@@ -24,6 +25,10 @@ from services.user import UserService
 
 router = Router()
 ADMIN_PASS = '4321'
+studio_service = StudioService()
+group_service = GroupService()
+student_service = StudentService()
+user_service = UserService()
 
 
 @router.message(Studio.name)
@@ -32,7 +37,7 @@ async def form_name_studio(message: Message, state: FSMContext):
 
     if re.match(r'^[а-яА-ЯёЁ\s]+$', studio_name):
         try:
-            await StudioService().add_studio(studio_name)
+            await studio_service.add_studio(studio_name)
             await message.answer(
                 f'Студия {studio_name} успешно добавлена. '
             )
@@ -50,6 +55,33 @@ async def form_name_studio(message: Message, state: FSMContext):
         )
 
 
+@router.message(EditStudio.new_studio_name)
+async def form_new_studio_name(message: Message, state: FSMContext):
+    new_studio_name: str = str(message.text)
+    data = await state.get_data()
+    studio_name = data.get('studio_name')
+    studio_id: int = data.get('studio_id')  # type: ignore
+
+    if new_studio_name == studio_name:
+        await message.answer(
+            'Имя студии не может быть таким же, '
+            'как и до этого. Попробуйте снова'
+        )
+
+    elif re.match(r'^[а-яА-ЯёЁ0-9\s]+$', new_studio_name):  # type: ignore
+        await studio_service.edit_studio(studio_id, new_name=new_studio_name)
+        await message.answer(
+            f'Студия {studio_name} успешно изменена на {new_studio_name}'
+        )
+        await state.clear()
+
+    else:
+        await message.answer(
+            'Пожалуйста, введите имя студии корректно, '
+            'используя только русские буквы. Попробуйте снова:'
+        )
+
+
 # Шаг 2 в создании группы. Выбор студии
 @router.message(Group.group_name)
 async def form_name_group(message: Message, state: FSMContext):
@@ -58,8 +90,7 @@ async def form_name_group(message: Message, state: FSMContext):
 
     if re.match(r'^[а-яА-ЯёЁ0-9\s\-]+$', group_name):  # type: ignore
         try:
-            await state.update_data(group_name=message.text)
-            await state.set_state(Group.studio_name)
+            await state.update_data(group_name=group_name)
             await message.answer(
                 f'Выберите студию для группы {group_name}',
                 reply_markup=keyboard,
@@ -80,18 +111,37 @@ async def form_name_group(message: Message, state: FSMContext):
 @router.message(Group.start_time)
 async def form_end_add_group(message: Message, state: FSMContext):
     start_time_str = str(message.text)
-    # data = await state.get_data()
-    # studio_id = data.get('studio_id')
-    # studio_name = data.get('studio_name')
+    data = await state.get_data()
+    studio_name: str = data.get('studio_name', 'problem')
+    studio_id: int = data.get('studio_id', 1)
+    group_name: str = data.get('group_name', 'problem')
+    start_date: WeekDays = data.get('start_date')  # type: ignore
+    group = await group_service.add_group(
+            group_name, studio_id, is_individual=False
+        )
 
     try:
         start_time = datetime.strptime(start_time_str, '%H:%M').time()
-        await state.update_data(start_time=start_time)
+        await group_service.add_schedule_to_group(
+            group_id=group.id,
+            start_time=start_time,
+            start_date=start_date
+        )
+        await message.answer(
+            f'Добавлено расписание день - {start_date.value}, время - '
+            f'{start_time} для группы {group.name} в студии {studio_name}'
+        )
+        await state.clear()
     except ValueError:
         await message.answer(
             'Время введено неверно. Пожалуйста, введите время в формате HH:MM.'
         )
         return
+    except ScheduleTimeInsertionError:
+        await message.answer(
+            f'Невозможно добавить расписание. Время {start_time} уже занято '
+            f'или слишком близко к существующему расписанию.'
+        )
 
 
 @router.message(EditGroup.new_group_name)
@@ -117,33 +167,6 @@ async def form_new_group_name(message: Message, state: FSMContext):
     else:
         await message.answer(
             'Пожалуйста, введите имя группы корректно, '
-            'используя только русские буквы. Попробуйте снова:'
-        )
-
-
-@router.message(EditStudio.new_studio_name)
-async def form_new_studio_name(message: Message, state: FSMContext):
-    new_studio_name: str = str(message.text)
-    data = await state.get_data()
-    studio_name = data.get('studio_name')
-    studio_id: int = data.get('studio_id')  # type: ignore
-
-    if new_studio_name == studio_name:
-        await message.answer(
-            'Имя студии не может быть таким же, '
-            'как и до этого. Попробуйте снова'
-        )
-
-    elif re.match(r'^[а-яА-ЯёЁ0-9\s]+$', new_studio_name):  # type: ignore
-        await StudioService().edit_studio(studio_id, new_name=new_studio_name)
-        await message.answer(
-            f'Студия {studio_name} успешно изменена на {new_studio_name}'
-        )
-        await state.clear()
-
-    else:
-        await message.answer(
-            'Пожалуйста, введите имя студии корректно, '
             'используя только русские буквы. Попробуйте снова:'
         )
 
@@ -185,14 +208,14 @@ async def form_edit_student_name(message: Message, state: FSMContext):
 async def form_add_time_indiv(message: Message, state: FSMContext):
     start_time_str = str(message.text)
     data = await state.get_data()
-    group_id: int = data.get('group_id', 1)
+    indiv: GroupSchema = data.get('indiv')  # type: ignore
     studio_name: str = data.get('studio_name', '1')
     start_date: WeekDays = data.get('start_date')  # type: ignore
 
     try:
         start_time = datetime.strptime(start_time_str, '%H:%M').time()
         await GroupService().add_schedule_to_group(
-            group_id=group_id,
+            group_id=indiv.id,
             start_time=start_time,
             start_date=start_date
         )

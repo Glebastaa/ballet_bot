@@ -22,8 +22,8 @@ class UserService:
         name_check = await uow.user.get_all(username=username)
         if id_check or name_check:
             logger.error(
-                f'Пользователь '{telegram_id}' уже существует. '
-                f'Либо существует юзернейм '{username}'.'
+                f'Пользователь "{telegram_id}" уже существует. '
+                f'Либо существует юзернейм "{username}".'
             )
             raise UserAlreadyExistsError(
                 {'telegram_id': telegram_id,
@@ -46,7 +46,7 @@ class UserService:
             user = await self.uow.user.add(validated_data.model_dump())
             await self.uow.commit()
             logger.info(
-                f'Пользователь '{telegram_id}' - '{username}' '
+                f'Пользователь "{telegram_id}" - "{username}" '
                 'добавлен как посетитель.'
             )
             return user.to_read_model(UserSchema)
@@ -65,8 +65,8 @@ class UserService:
             )
             await self.uow.commit()
             logger.info(
-                f'Роль пользователя '{telegram_id}' - '
-                f''{user.username}' изменена на '{user.role.value}'.'
+                f'Роль пользователя "{telegram_id}" - '
+                f'"{user.username}" изменена на "{user.role.value}".'
             )
             return user.to_read_model(UserSchema)
 
@@ -100,7 +100,7 @@ class UserService:
             user = await self.uow.user.delete(id=telegram_id)
             await self.uow.commit()
             logger.info(
-                f'Пользователь '{telegram_id}' - '{user.username}' удален.'
+                f'Пользователь "{telegram_id}" - "{user.username}" удален.'
             )
             return user.to_read_model(UserSchema)
 

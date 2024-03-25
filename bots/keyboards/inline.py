@@ -7,19 +7,20 @@ def create_studio_kb(studio_name: str, studio_id: int) -> InlineKeyboardMarkup:
             [
                 InlineKeyboardButton(
                     text='Изменить имя студии',
-                    callback_data=f'edit_studio_{studio_name}_{studio_id}'
+                    callback_data=f'call_edit_studio_{studio_name}_{studio_id}'
                 )
             ],
             [
                 InlineKeyboardButton(
                     text='Удалить студию',
-                    callback_data=f'delete_studio_{studio_name}_{studio_id}'
+                    callback_data=f'call_delete_studio_'
+                                  f'{studio_name}_{studio_id}'
                 )
             ],
             [
                 InlineKeyboardButton(
                     text='Список групп',
-                    callback_data=f'list_group_{studio_name}_{studio_id}'
+                    callback_data=f'call_list_group_{studio_name}_{studio_id}'
                 )
             ]
         ],
@@ -39,7 +40,8 @@ def select_group_for_studio_kb(
                 InlineKeyboardButton(
                     text='Сменить имя группы',
                     callback_data=(
-                        f'edit_group_{group_name}_{group_id}_{studio_name}'
+                        f'call_edit_group_{group_name}_'
+                        f'{group_id}_{studio_name}'
                     )
                 ),
             ],
@@ -47,7 +49,7 @@ def select_group_for_studio_kb(
                 InlineKeyboardButton(
                     text='Добавить занятие в группу',
                     callback_data=(
-                        f'add_shedule_{group_name}_{group_id}_'
+                        f'call_add_shedule_{group_name}_{group_id}_'
                         f'{studio_id}_{studio_name}'
                     )
                 ),
@@ -55,25 +57,26 @@ def select_group_for_studio_kb(
             [
                 InlineKeyboardButton(
                     text='Удалить группу',
-                    callback_data=f'delete_group_{group_name}_{group_id}'
+                    callback_data=f'call_delete_group_{group_name}_{group_id}'
                 ),
             ],
             [
                 InlineKeyboardButton(
                     text='Добавить ученика в группу',
-                    callback_data=f'add_student_{group_name}_{group_id}'
+                    callback_data=f'call_add_student_{group_name}_{group_id}'
                 ),
             ],
             [
                 InlineKeyboardButton(
                     text='Удалить ученика из группы',
-                    callback_data=f'delete_student_{group_name}_{group_id}'
+                    callback_data=f'call_delete_student_'
+                                  f'{group_name}_{group_id}'
                 ),
             ],
             [
                 InlineKeyboardButton(
                     text='Список учеников',
-                    callback_data=f'list_students_{group_name}_{group_id}'
+                    callback_data=f'call_list_students_{group_name}_{group_id}'
                 ),
             ],
         ],
@@ -90,21 +93,23 @@ def select_students_kb(
             [
                 InlineKeyboardButton(
                     text='Изменить имя ученика',
-                    callback_data=f'edit_student_{student_name}_{student_id}'
+                    callback_data=f'call_edit_student_'
+                                  f'{student_name}_{student_id}'
                 ),
             ],
             [
                 InlineKeyboardButton(
                     text='Удалить ученика',
                     callback_data=(
-                        f'fulldelete_student_{student_name}_{student_id}'
+                        f'call_fulldelete_student_{student_name}_{student_id}'
                     ),
                 ),
             ],
             [
                 InlineKeyboardButton(
                     text='Список групп, в которых, состоит ученик',
-                    callback_data=f'show_group_{student_name}_{student_id}'
+                    callback_data=f'call_show_group_'
+                                  f'{student_name}_{student_id}'
                 ),
             ],
         ],
@@ -121,7 +126,8 @@ def select_student_for_group_kb(
             [
                 InlineKeyboardButton(
                     text=f'Удалить ученика из группы {group_name}',
-                    callback_data=f'delete_student_{group_name}_{group_id}'
+                    callback_data=f'call_delete_student_'
+                                  f'{group_name}_{group_id}'
                 ),
             ],
         ],
@@ -181,7 +187,7 @@ def show_user_menu_kb(user_name: str, user_id: int) -> InlineKeyboardMarkup:
             [
                 InlineKeyboardButton(
                     text='Изменить роль',
-                    callback_data=f'change_role_{user_name}_{user_id}'
+                    callback_data=f'call_change_role_{user_name}_{user_id}'
                 ),
             ],
         ],

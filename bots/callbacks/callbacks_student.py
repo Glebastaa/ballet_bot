@@ -3,7 +3,6 @@ from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 
 from utils.states import EditStudent
-from bots.callbacks.callbacks_studio import extract_data_from_callback
 from bots.keyboards import builders, inline
 from services.student import StudentService
 
@@ -12,11 +11,24 @@ router = Router()
 
 student_service = StudentService()
 
+student_list = ['pick_student', 'add_student2', 'delete_students',
+                'fulldelete_student', 'show_group', 'edit_student',
+                'select_student']
+
+
+def extract_data_from_callback(
+        callback_query: CallbackQuery,
+        index1=3,
+        index2=4,
+):
+    data = callback_query.data.split('_')
+    return data[index1], int(data[index2])
+
 
 async def student_callback(
         callback: CallbackQuery,
         action: str,
-        state: FSMContext = None  # type: ignore
+        state: FSMContext | None = None
 ) -> None:
     student_name, student_id = extract_data_from_callback(callback)
     message = callback.message
@@ -34,7 +46,6 @@ async def student_callback(
         await message.edit_text(
             f'Ученик {student_name} успешно добавлен в группу {group_name}'
         )
-        await message.edit_reply_markup(reply_markup=None)
         await state.clear()
 
     elif action == 'delete_students':
@@ -80,53 +91,3 @@ async def student_callback(
             f'Выберите студию, в которой будет заниматся ученик {student_name}'
         )
         await message.edit_reply_markup(reply_markup=keyboard)
-
-
-# Выбор ученика для дальнешего взаимодействия
-@router.callback_query(F.data.startswith('pick_student_'))
-async def select_students(callback: CallbackQuery) -> None:
-    await student_callback(callback, 'pick_student')
-
-
-@router.callback_query(F.data.startswith('add_student2_'))
-async def select_student_for_group(
-    callback: CallbackQuery,
-    state: FSMContext
-) -> None:
-    await student_callback(callback, 'add_student2', state)
-
-
-@router.callback_query(F.data.startswith('delete_students_'))
-async def call_delete_students_from_group(
-    callback: CallbackQuery,
-    state: FSMContext
-) -> None:
-    await student_callback(callback, 'delete_students', state)
-
-
-# Удаление ученика из БД
-@router.callback_query(F.data.startswith('fulldelete_student_'))
-async def call_delete_student(callback: CallbackQuery) -> None:
-    await student_callback(callback, 'fulldelete_student')
-
-
-@router.callback_query(F.data.startswith('show_group_'))
-async def call_show_group(callback: CallbackQuery) -> None:
-    await student_callback(callback, 'show_group')
-
-
-# Редактирование имени ученика
-@router.callback_query(F.data.startswith('edit_student_'))
-async def call_edit_student_name(
-    callback: CallbackQuery,
-    state: FSMContext
-) -> None:
-    await student_callback(callback, 'edit_student', state)
-
-
-@router.callback_query(F.data.startswith('select_student_'))
-async def call_show_group_to_add_student(
-    callback: CallbackQuery,
-    state: FSMContext
-) -> None:
-    await student_callback(callback, 'select_student', state)
