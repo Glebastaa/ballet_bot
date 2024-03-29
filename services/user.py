@@ -1,5 +1,5 @@
 from database.models import UserRoles
-from exceptions import UserAlreadyExistsError
+from exceptions import SameRoleError, UserAlreadyExistsError
 from logger_config import setup_logger
 from schemas.user import UserSchema, UserSchemaAdd, UserSchemaUpdateRole
 from utils.unitofwork import UnitOfWork
@@ -59,6 +59,9 @@ class UserService:
         """Change a role."""
         role_in = UserSchemaUpdateRole(role=role)
         async with self.uow:
+            user_check = await self.uow.user.get(id=telegram_id)
+            if user_check.role == role:
+                raise SameRoleError(role.value)
             user = await self.uow.user.update(
                 data=role_in.model_dump(),
                 id=telegram_id
