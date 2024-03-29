@@ -14,6 +14,7 @@ class ScheduleSchemaAdd(ScheduleSchemaBase):
 
 
 class ScheduleSchema(ScheduleSchemaBase):
+    id: int
     group_id: int
 
     class Config:
