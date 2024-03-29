@@ -152,30 +152,33 @@ class GroupService:
     async def edit_group(
             self,
             group_id: int,
-            new_group_name: str,
+            new_group_name: str | None = None,
+            notes: str | None = None,
             is_individual: bool = False
     ) -> GroupSchema:
         """Edit a group."""
         validated_group = GroupSchemaUpdate(
             name=new_group_name,
+            notes=notes,
             is_individual=is_individual
         )
         async with self.uow:
-            old_group = await self.uow.group.get(id=group_id)
-            await self._is_already_exists(
-                group_name=new_group_name,
-                studio_id=old_group.studio_id,
-                is_individual=is_individual,
-                uow=self.uow
-            )
+            if new_group_name:
+                old_group = await self.uow.group.get(id=group_id)
+                await self._is_already_exists(
+                    group_name=new_group_name,
+                    studio_id=old_group.studio_id,
+                    is_individual=is_individual,
+                    uow=self.uow
+                )
             group = await self.uow.group.update(
-                data=validated_group.model_dump(),
+                data=validated_group.model_dump(exclude_none=True),
                 id=group_id
             )
             await self.uow.commit()
             logger.info(
-                f'У группы по id {group_id} изменено имя '
-                f'на "{new_group_name}".'
+                f'У группы по id {group_id} изменены данные '
+                f'на "{validated_group.model_dump(exclude_none=True)}".'
             )
             return group.to_read_model(GroupSchema)
 
@@ -193,18 +196,16 @@ class GroupService:
     async def get_date_time_group(
             self,
             group_id: int
-    ) -> list[list[str]]:
+    ) -> list[ScheduleSchema]:
         """Gets a datetime."""
         async with self.uow:
             schedules = await self.uow.schedule.get_all(group_id=group_id)
-            schedules = [s.to_read_model(ScheduleSchema) for s in schedules]
-            return [[s.start_time.strftime('%H:%M'),
-                     s.start_date.value] for s in schedules]
+            return [s.to_read_model(ScheduleSchema) for s in schedules]
 
     async def get_date_time_indivs_by_studio(
             self,
             studio_id: int
-    ) -> list[list[str]]:
+    ) -> list[ScheduleSchema]:
         """Gets all datetime from studio."""
         async with self.uow:
             studio = await self.uow.studio.get(id=studio_id)
@@ -215,9 +216,7 @@ class GroupService:
                         group_id=group.id
                     )
                     res.extend(schedules)
-            res = [r.to_read_model(ScheduleSchema) for r in res]
-            return [[schedules.start_time.strftime('%H:%M'),
-                     schedules.start_date.value] for schedules in res]
+            return [r.to_read_model(ScheduleSchema) for r in res]
 
     async def edit_date_time_group(
             self,
@@ -270,3 +269,15 @@ class GroupService:
                 if group.is_individual == is_individual
             ]
             return groups
+
+    async def delete_notes(self, group_id: int) -> None:
+        """Set notes to None."""
+        async with self.uow:
+            await self.uow.group.update({'notes': None}, id=group_id)
+            await self.uow.commit()
+
+    async def get_notes(self, group_id: int) -> str | None:
+        """Get notes by group id."""
+        async with self.uow:
+            group = await self.uow.group.get(id=group_id)
+            return group.notes
