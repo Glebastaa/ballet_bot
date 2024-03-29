@@ -55,3 +55,11 @@ class StudentAlreadyInGroupError(Exception):
     def __init__(self, entity_data: dict):
         message = f'Student {entity_data} already in group.'
         super().__init__(message)
+
+
+class SameRoleError(Exception):
+    """Raised if the user already has the same role."""
+
+    def __init__(self, role: str):
+        message = f'User already has role: {role}.'
+        super().__init__(message)

@@ -16,6 +16,8 @@ from database.models import (
     WeekDays
 )
 
+from notes import notes_test
+
 
 # Studio.
 
@@ -41,7 +43,7 @@ async def groups(session, studios):
     group_2 = Group(
         name='Киригакурэ',
         studio_id=1,
-        notes=None,
+        notes=notes_test,
         is_individual=False
     )
     group_3 = Group(

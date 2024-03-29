@@ -6,7 +6,7 @@ from contextlib import nullcontext as does_not_raise
 
 from sqlalchemy import select
 from database.models import User, UserRoles
-from exceptions import UserAlreadyExistsError
+from exceptions import SameRoleError, UserAlreadyExistsError
 
 from schemas.user import UserSchema
 from services.user import UserService
@@ -65,6 +65,11 @@ class TestUserService:
 
         user = await session.get(User, 5263573061)
         assert user.role == UserRoles.STUDENT
+
+    async def test_switch_to_same_role(self, session, users):
+        with pytest.raises(SameRoleError):
+            await UserService().switch_to_another_role(
+                5223573061, UserRoles.TEACHER)
 
     async def test_get_visitors(self, session, users):
         visitors = await UserService().get_visitors()

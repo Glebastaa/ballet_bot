@@ -9,6 +9,7 @@ from sqlalchemy import select
 from database.models import Group, Schedule, Studio, WeekDays
 from exceptions import EntityAlreadyExists, ScheduleTimeInsertionError
 from schemas.constant import NAME_MAX_LENGTH, NAME_MIN_LENGTH
+from schemas.group import GroupSchema
 from services.group import GroupService
 
 from notes import notes_test
@@ -155,18 +156,21 @@ class TestGroupService:
         assert not group[0].is_individual
 
     @pytest.mark.parametrize(
-            'group_id, group_name, expectation',
+            'group_id, group_name, notes, expectation',
             [
-                [1, 'Анбу', does_not_raise()],
-                [1, '', pytest.raises(ValidationError)],
-                [1, None, pytest.raises(ValidationError)],
-                [1, 1, pytest.raises(ValidationError)],
-                [1, 'А' * (NAME_MIN_LENGTH - 1),
+                [1, 'Анбу', None, does_not_raise()],
+                [1, 'Анбу', notes_test, does_not_raise()],
+                [1, 'Анбу', None, does_not_raise()],
+                [1, '', None, pytest.raises(ValidationError)],
+                [1, None, notes_test, does_not_raise()],
+                [1, None, None, does_not_raise()],
+                [1, 1, None, pytest.raises(ValidationError)],
+                [1, 'А' * (NAME_MIN_LENGTH - 1), None,
                  pytest.raises(ValidationError)],
-                [1, 'А' * (NAME_MAX_LENGTH + 1),
+                [1, 'А' * (NAME_MAX_LENGTH + 1), None,
                  pytest.raises(ValidationError)],
                 # Already exists.
-                [1, 'Коноха', pytest.raises(EntityAlreadyExists)]
+                [1, 'Коноха', None, pytest.raises(EntityAlreadyExists)]
             ]
     )
     async def test_edit_group(
@@ -175,16 +179,27 @@ class TestGroupService:
         groups,
         group_id,
         group_name,
+        notes,
         expectation
     ):
         with expectation:
-            old = await GroupService().edit_group(group_id, group_name)
-            old_notes = old.notes
+            old_group = (
+                await session.get(Group, group_id)
+            ).to_read_model(GroupSchema)
+            await GroupService().edit_group(group_id, group_name, notes)
+            new_group = (
+                await session.get(Group, group_id)
+            ).to_read_model(GroupSchema)
 
-            edited_group = await session.get(Group, group_id)
-            assert edited_group.name == group_name
-            assert edited_group.notes == old_notes
-            assert not edited_group.is_individual
+            if group_name:
+                assert new_group.name == group_name
+            else:
+                assert new_group.name == old_group.name
+
+            if notes:
+                assert new_group.notes == notes
+            else:
+                assert new_group.notes == old_group.notes
 
     async def test_delete_group(self, session, indivs):
         name = await GroupService().delete_group(2)
@@ -201,8 +216,8 @@ class TestGroupService:
         dt_list = await GroupService().get_date_time_group(1)
 
         for dt in dt_list:
-            assert dt[0] == '10:23'
-            assert dt[1] == 'Понедельник'
+            assert dt.start_time.strftime("%H:%M") == '10:23'
+            assert dt.start_date.value == 'Понедельник'
 
     @pytest.mark.parametrize(
             'schedule_id, new_date, expectation',
@@ -300,3 +315,27 @@ class TestGroupService:
         date_time = await GroupService().get_date_time_indivs_by_studio(1)
         assert isinstance(date_time, list)
         assert len(date_time) == 2
+        assert date_time[0].start_date == WeekDays.monday
+        assert date_time[1].start_date == WeekDays.friday
+
+    async def test_delete_notes(self, session, groups):
+        old_group = (await session.get(Group, 2)).to_read_model(GroupSchema)
+        assert old_group.notes == notes_test
+        await GroupService().delete_notes(2)
+
+        group = await session.get(Group, 2)
+        assert group.notes is None
+        assert group.name == old_group.name
+        assert group.is_individual == old_group.is_individual
+        assert group.studio_id == old_group.studio_id
+
+    @pytest.mark.parametrize(
+            'group_id, expect',
+            [
+                [1, None],
+                [2, notes_test]
+            ]
+    )
+    async def test_get_notes(self, session, groups, group_id, expect):
+        notes = await GroupService().get_notes(group_id)
+        assert notes == expect
