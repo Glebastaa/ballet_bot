@@ -275,6 +275,7 @@ class GroupService:
         async with self.uow:
             await self.uow.group.update({'notes': None}, id=group_id)
             await self.uow.commit()
+            logger.info(f'У группы "{group_id}" удалены заметки.')
 
     async def get_notes(self, group_id: int) -> str | None:
         """Get notes by group id."""

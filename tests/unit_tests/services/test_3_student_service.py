@@ -245,7 +245,7 @@ class TestStudentService:
             old_student = (
                 await session.get(Student, student_id)
             ).to_read_model(StudentSchema)
-            await StudentService().edit_notes(student_id, notes)
+            await StudentService().edit_or_delete_notes(student_id, notes)
             new_student = (
                 await session.get(Student, student_id)
             ).to_read_model(StudentSchema)
