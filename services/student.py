@@ -132,6 +132,8 @@ class StudentService:
             student = await self.uow.student.update(
                 data.model_dump(), id=student_id)
             await self.uow.commit()
+            logger.info(
+                f'У ученика "{student_id}" изменены заметки на "{notes}"')
             return student.notes
 
     async def get_notes(self, student_id: int) -> str | None:
