@@ -13,7 +13,10 @@ from exceptions import (
     StudentAlreadyInGroupError
 )
 from schemas.constant import NAME_MAX_LENGTH, NAME_MIN_LENGTH
+from schemas.student import StudentSchema
 from services.student import StudentService
+
+from notes import notes_test
 
 
 @pytest.mark.student_service
@@ -212,3 +215,40 @@ class TestStudentService:
         none_students = await StudentService().get_all_students()
 
         assert none_students == []
+
+    async def test_get_notes(self, session, students):
+        sakura_notes = await StudentService().get_notes(3)
+        assert sakura_notes == notes_test
+
+        naruto_notes = await StudentService().get_notes(1)
+        assert naruto_notes is None
+
+    @pytest.mark.parametrize(
+            'student_id, notes, expectation',
+            [
+                [3, 'Привет!', does_not_raise()],
+                [1, notes_test, does_not_raise()],
+                [3, None, does_not_raise()],
+                [3, 2341, pytest.raises(ValidationError)],
+                [3, '', does_not_raise()]
+            ]
+    )
+    async def test_edit_notes(
+        self,
+        session,
+        students,
+        student_id,
+        notes,
+        expectation
+    ):
+        with expectation:
+            old_student = (
+                await session.get(Student, student_id)
+            ).to_read_model(StudentSchema)
+            await StudentService().edit_notes(student_id, notes)
+            new_student = (
+                await session.get(Student, student_id)
+            ).to_read_model(StudentSchema)
+
+            assert new_student.notes == notes
+            assert old_student.name == new_student.name
