@@ -21,3 +21,7 @@ class StudentSchema(StudentSchemaBase):
 
 class StudentSchemaUpdate(StudentSchemaBase):
     pass
+
+
+class StudentNotesSchema(BaseModel):
+    notes: str | None
