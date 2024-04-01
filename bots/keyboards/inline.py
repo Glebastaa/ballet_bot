@@ -1,3 +1,4 @@
+from datetime import time
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 
@@ -38,19 +39,27 @@ def select_group_for_studio_kb(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text='Сменить имя группы',
+                    text='Добавить занятие в группу',
                     callback_data=(
-                        f'call_edit_group_{group_name}_'
-                        f'{group_id}_{studio_name}'
+                        f'call_add_shedule_{group_name}_{group_id}_'
+                        f'{studio_id}_{studio_name}'
                     )
                 ),
             ],
             [
                 InlineKeyboardButton(
-                    text='Добавить занятие в группу',
+                    text='Список занятий в группе',
                     callback_data=(
-                        f'call_add_shedule_{group_name}_{group_id}_'
-                        f'{studio_id}_{studio_name}'
+                        f'call_show_schedule_{group_name}_{group_id}'
+                    )
+                ),
+            ],
+            [
+                InlineKeyboardButton(
+                    text='Сменить имя группы',
+                    callback_data=(
+                        f'call_edit_group_{group_name}_'
+                        f'{group_id}_{studio_name}'
                     )
                 ),
             ],
@@ -68,15 +77,15 @@ def select_group_for_studio_kb(
             ],
             [
                 InlineKeyboardButton(
-                    text='Удалить ученика из группы',
-                    callback_data=f'call_delete_student_'
-                                  f'{group_name}_{group_id}'
+                    text='Список учеников',
+                    callback_data=f'call_list_students_{group_name}_{group_id}'
                 ),
             ],
             [
                 InlineKeyboardButton(
-                    text='Список учеников',
-                    callback_data=f'call_list_students_{group_name}_{group_id}'
+                    text='Удалить ученика из группы',
+                    callback_data=f'call_delete_student_'
+                                  f'{group_name}_{group_id}'
                 ),
             ],
         ],
@@ -113,6 +122,34 @@ def select_students_kb(
                 ),
             ],
         ],
+    )
+    return kb
+
+
+def select_schedule_for_group_kb(
+        start_date: str,
+        start_time: time,
+        schedule_id: int
+) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=f'Редактировать рассписание {start_date}:'
+                         f'{start_time}',
+                    callback_data=f'call_editgroup_schedule_{start_date}_'
+                                  f'{start_time}_{schedule_id}'
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text=f'Удалить рассписание {start_date}:'
+                         f'{start_time}',
+                    callback_data=f'call_deletegroup_schedule_{start_date}_'
+                                  f'{start_time}_{schedule_id}'
+                )
+            ],
+        ]
     )
     return kb
 

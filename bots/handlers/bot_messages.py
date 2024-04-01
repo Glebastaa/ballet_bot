@@ -2,12 +2,15 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from services.student import StudentService
 from bots.keyboards import builders
 from utils.states import Studio, Group, Student
 from bots.middlewares import registered_user_required
 from bots.middlewares.decorator import roles_user_required
 
 router = Router()
+
+student_service = StudentService()
 
 
 @router.message(F.text.lower() == 'добавить студию')
@@ -58,8 +61,12 @@ async def form_change_name_studio(message: Message):
 @registered_user_required
 @roles_user_required(['owner'])
 async def form_add_group(message: Message, state: FSMContext):
-    await state.set_state(Group.group_name)
-    await message.answer('Введите название группы:')
+    await message.answer(
+        'Выберите студию, в которую хотите добавить группу',
+        reply_markup=await builders.show_list_studios_menu(
+            action='select_studio'
+        )
+    )
 
 
 @router.message(F.text.lower() == 'удалить группу')
@@ -159,3 +166,34 @@ async def form_add_student_from_group(message: Message):
             action='select_student'
         )
     )
+
+
+@router.message(F.text.lower() == 'удалить ученика')
+@registered_user_required
+@roles_user_required(['owner'])
+async def form_delete_student(message: Message):
+    students = await student_service.get_all_students()
+    if students:
+        await message.answer(
+            'Выберите ученика, которого хотите удалить из базы данных',
+            reply_markup=await builders.show_list_students_menu(
+                action='fulldelete_student'
+            )
+        )
+    else:
+        await message.answer('В базе данных нет ни одного ученика')
+
+
+@router.message(F.text.lower() == 'изменить имя ученика')
+@registered_user_required
+@roles_user_required(['owner'])
+async def form_change_name_student(message: Message):
+    students = await student_service.get_all_students()
+    if students:
+        await message.answer(
+            'Выберите ученика, у которого, хотите изменить имя',
+            reply_markup=await builders.show_list_students_menu(
+                action='edit_student'
+            ))
+    else:
+        await message.answer('В базе данных нет ни одного ученика')

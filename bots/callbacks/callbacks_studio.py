@@ -7,24 +7,16 @@ from aiogram.fsm.context import FSMContext
 from bots.keyboards import builders, inline
 from services.group import GroupService
 from services.studio import StudioService
-from utils.states import EditStudio
+from utils.states import EditStudio, Group
 from bots.callbacks.callbacks_group import group_callback, group_list
 from bots.callbacks.callbacks_student import student_callback, student_list
+from bots.callbacks.callbacks_schedule import schedule_callback, schedule_list
 
 
 router = Router()
 
 studio_service = StudioService()
 group_service = GroupService()
-
-
-def extract_data_from_callback(
-        callback_query: CallbackQuery,
-        index1=3,
-        index2=4,
-):
-    data = callback_query.data.split('_')
-    return data[index1], int(data[index2])
 
 
 @router.callback_query(F.data.startswith('call_'))
@@ -37,8 +29,19 @@ async def callback_studio_request(
         await group_callback(callback, action, state)
     elif action in student_list:
         await student_callback(callback, action, state)
+    elif action in schedule_list:
+        await schedule_callback(callback, action, state)
     else:
         await studio_callback(callback, action, state)
+
+
+def extract_data_from_callback(
+        callback_query: CallbackQuery,
+        index1=3,
+        index2=4,
+):
+    data = callback_query.data.split('_')
+    return data[index1], int(data[index2])
 
 
 async def studio_callback(
@@ -67,14 +70,11 @@ async def studio_callback(
         await message.edit_text(f'Введите новое имя для студии {studio_name}')
 
     elif action == 'select_studio':
-        keyboard = await builders.process_select_weekdays(
-            action='weekday_group'
-        )
         await state.update_data(studio_id=studio_id, studio_name=studio_name)
         await message.edit_text(
-            'Выберите, в какой день будет проходить занятие в группе'
+            f'Введите название для новой группы в студии {studio_name}'
         )
-        await message.edit_reply_markup(reply_markup=keyboard)  # type: ignore
+        await state.set_state(Group.group_name)
 
     elif action == 'list_group':
         groups = await group_service.get_groups(studio_id)

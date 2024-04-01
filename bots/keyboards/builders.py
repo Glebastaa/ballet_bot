@@ -1,3 +1,4 @@
+from schemas.schedule import ScheduleSchema
 from schemas.user import UserSchema
 from services.studio import StudioService
 from services.group import GroupService
@@ -18,7 +19,8 @@ async def add_button_to_kb(
         kb.add(InlineKeyboardButton(
             text=item.name,
             callback_data=(
-                f'call_{action}_{item.name}_{item.id}_{extra_data}_{extra_data2}'
+                f'call_{action}_{item.name}_{item.id}_'
+                f'{extra_data}_{extra_data2}'
             )
         ),
         )
@@ -107,3 +109,17 @@ async def switch_to_role_kb(
             callback_data=f'{action}_{role.value}_{user_name}_{user_id}'
         ))
     return keyboard.adjust(1).as_markup()
+
+
+async def show_list_schedules_for_group(
+        action: str,
+        schedules: list[ScheduleSchema]
+):
+    keyboard = InlineKeyboardBuilder()
+    for schedule in schedules:
+        keyboard.add(InlineKeyboardButton(
+            text=f'{schedule.start_date.value}, {schedule.start_time}',
+            callback_data=f'{action}_{schedule.start_date.value}_'
+                          f'{schedule.start_time}_{schedule.id}'
+        ))
+    return keyboard.adjust(2).as_markup()

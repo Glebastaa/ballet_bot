@@ -23,6 +23,11 @@ class EditGroup(StatesGroup):
     studio_name = State()
 
 
+class EditSchedule(StatesGroup):
+    start_date = State()
+    start_time = State()
+
+
 class Student(StatesGroup):
     name = State()
 

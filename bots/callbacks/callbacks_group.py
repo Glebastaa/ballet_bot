@@ -1,4 +1,4 @@
-from aiogram import F, Router
+from aiogram import Router
 from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 
@@ -16,7 +16,7 @@ student_service = StudentService()
 
 group_list = ['pick_group', 'delete_group', 'edit_group', 'add_shedule',
               'add_student', 'list_students', 'delete_student', 'pick_groups',
-              'add_student3', 'delete_indiv']
+              'add_student3', 'delete_indiv', 'show_schedule']
 
 
 def extract_data_from_callback(
@@ -105,14 +105,21 @@ async def group_callback(
         await message.edit_reply_markup(reply_markup=keyboard)
 
     elif action == 'delete_student':
-        keyboard = await builders.show_list_students_from_group_menu(
-            'delete_students', group_id
-        )
-        await state.update_data(group_name=group_name, group_id=group_id)
-        await message.edit_text(
-            f'Выберите ученика для удаления его из группы {group_name}'
-        )
-        await message.edit_reply_markup(reply_markup=keyboard)
+        students = await student_service.get_students_from_group(group_id)
+        if students:
+            keyboard = await builders.show_list_students_from_group_menu(
+                'delete_students', group_id
+            )
+            await state.update_data(group_name=group_name, group_id=group_id)
+            await message.edit_text(
+                f'Выберите ученика для удаления его из группы {group_name}'
+            )
+            await message.edit_reply_markup(reply_markup=keyboard)
+        else:
+            await message.edit_text(
+                f'В группе - {group_name} нет учеников. Выберите другую группу'
+            )
+            await message.edit_reply_markup(reply_markup=None)
 
     elif action == 'pick_groups':
         #  student_name: str = callback.data.split('_')[5]
@@ -155,3 +162,19 @@ async def group_callback(
         await group_service.delete_group(group_id)
         await message.answer(f'Индив {group_name} успешно удалена')
         await message.edit_reply_markup(reply_markup=None)
+
+    elif action == 'show_schedule':
+        schedules = await group_service.get_date_time_group(group_id=group_id)
+        if schedules:
+            keyboard = await builders.show_list_schedules_for_group(
+                'call_group_schedule', schedules
+            )
+            await message.edit_text(
+                f'Список всех занятий в группе {group_name}'
+            )
+            await message.edit_reply_markup(
+                reply_markup=keyboard  # type: ignore
+            )
+        else:
+            await message.edit_text('В группе нет занятий')
+            await message.edit_reply_markup(reply_markup=None)

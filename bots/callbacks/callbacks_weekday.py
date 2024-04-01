@@ -2,7 +2,7 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 
-from utils.states import AddIndiv, Group
+from utils.states import AddIndiv, EditSchedule, Group
 from database.models import WeekDays
 from services.group import GroupService
 
@@ -35,6 +35,13 @@ async def weekday_callback(
             f'Введите время начала занятия в {start_date.value}'
         )
 
+    elif action == 'date_schedule':
+        await state.update_data(start_date=start_date)
+        await state.set_state(EditSchedule.start_time)
+        await message.edit_text(
+            f'Введите время начала занятия в {start_date.value}'
+        )
+
 
 @router.callback_query(F.data.startswith('weekday_indiv_'))
 async def select_weekday_for_indiv(
@@ -50,3 +57,11 @@ async def call_add_weekday_from_group(
     state: FSMContext,
 ) -> None:
     await weekday_callback(callback, 'weekday_group', state)
+
+
+@router.callback_query(F.data.startswith('date_schedule'))
+async def call_add_date_for_edit_schedule_to_group(
+    callback: CallbackQuery,
+    state: FSMContext,
+) -> None:
+    await weekday_callback(callback, 'date_schedule', state)
