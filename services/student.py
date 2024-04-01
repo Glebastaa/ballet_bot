@@ -6,6 +6,7 @@ from exceptions import (
 from logger_config import setup_logger
 from schemas.constant import MAX_STUDENTS_IN_INDIV
 from schemas.student import (
+    StudentNotesSchema,
     StudentSchema,
     StudentSchemaAdd,
     StudentSchemaUpdate
@@ -119,3 +120,24 @@ class StudentService:
             await self.uow.commit()
             logger.info(f'Ученик "{student.name}" удален.')
             return student.name
+
+    async def edit_or_delete_notes(
+            self,
+            student_id: int,
+            notes: str | None
+    ) -> str | None:
+        """Edit or delete notes by student id."""
+        async with self.uow:
+            data = StudentNotesSchema(notes=notes)
+            student = await self.uow.student.update(
+                data.model_dump(), id=student_id)
+            await self.uow.commit()
+            logger.info(
+                f'У ученика "{student_id}" изменены заметки на "{notes}"')
+            return student.notes
+
+    async def get_notes(self, student_id: int) -> str | None:
+        """Get notes from student."""
+        async with self.uow:
+            student = await self.uow.student.get(id=student_id)
+            return student.notes

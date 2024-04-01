@@ -132,7 +132,7 @@ async def students(session):
     )
     student_3 = Student(
         name='Сакура',
-        notes=None
+        notes=notes_test
     )
     session.add_all([student_1, student_2, student_3])
     await session.commit()
