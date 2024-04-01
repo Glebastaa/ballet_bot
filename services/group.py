@@ -230,7 +230,9 @@ class GroupService:
             start_time=new_time
         )
         async with self.uow:
-            old_schedule = await self.uow.schedule.get(id=schedule_id)
+            old_schedule = (
+                await self.uow.schedule.get(id=schedule_id)
+            ).to_read_model(ScheduleSchema)
             if not new_date:
                 new_date = old_schedule.start_date
             if not new_time:
