@@ -339,3 +339,8 @@ class TestGroupService:
     async def test_get_notes(self, session, groups, group_id, expect):
         notes = await GroupService().get_notes(group_id)
         assert notes == expect
+
+    async def test_delete_schedule(self, session, groups):
+        await GroupService().delete_schedule(1)
+        schedule = await session.get(Schedule, 1)
+        assert schedule is None
