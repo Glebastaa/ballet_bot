@@ -18,13 +18,14 @@ user_service = UserService()
 async def start_main(message: Message, state: FSMContext):
     curr_id = message.from_user.id
 
-    check_id = await user_service.get_user_by_id(telegram_id=curr_id)
-    if check_id is None:
+    user = await user_service.get_user_by_id(telegram_id=curr_id)
+    if user is None:
         await message.answer('Придумайте ваш никнейм (позже он понадобится)')
         await state.set_state(RegUser.wait_for_name)
     else:
         await message.answer(
-            'Вы уже зарегестрированны! Используйте меню для работы с ботом'
+            'Вы уже зарегестрированны! Используйте меню для работы с ботом\n'
+            f'Ваш никнейм - {user.username}'
         )
 
 

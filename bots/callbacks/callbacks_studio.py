@@ -145,12 +145,38 @@ async def studio_callback(
         await message.edit_reply_markup(reply_markup=keyboard)
 
     elif action == 'select_studios':
-        keyboard = await builders.show_list_indiv_menu(
-            action='delete_indiv',
-            studio_name=studio_name,
-            studio_id=studio_id
+        schedules = await group_service.get_date_time_indivs_by_studio(
+            studio_id
         )
-        await message.edit_text(
-            f'Выбери индив, который необходимо удалить из студии {studio_name}'
+        if schedules:
+            keyboard = await builders.show_list_schedules_for_studios(
+                'call_delete_indiv', schedules
+            )
+            await message.edit_text(
+                f'Выбери индив, который необходимо удалить из '
+                f'студии {studio_name}'
+            )
+            await message.edit_reply_markup(
+                reply_markup=keyboard  # type: ignore
+            )
+        else:
+            await message.edit_text(f'В {studio_name} нет индивов')
+            await message.edit_reply_markup(reply_markup=None)
+
+    elif action == 'indiv_studio':
+        schedules = await group_service.get_date_time_indivs_by_studio(
+            studio_id
         )
-        await message.edit_reply_markup(reply_markup=keyboard)
+        if schedules:
+            keyboard = await builders.show_list_schedules_for_studios(
+                'call_group_schedule', schedules
+            )
+            await message.edit_text(
+                f'Список всех индивов в студии {studio_name}'
+            )
+            await message.edit_reply_markup(
+                reply_markup=keyboard  # type: ignore
+            )
+        else:
+            await message.edit_text(f'В {studio_name} нет индивов')
+            await message.edit_reply_markup(reply_markup=None)

@@ -39,6 +39,11 @@ class AddStudent(StatesGroup):
     student_id = State()
 
 
+class AddStudentToIndiv(StatesGroup):
+    schedule = State()
+    stundet = State()
+
+
 class EditStudent(StatesGroup):
     student_name = State()
     student_id = State()
@@ -57,6 +62,10 @@ class AddIndiv(StatesGroup):
     student_name = State()
     start_time = State()
     start_date = State()
+
+
+class AddNotes(StatesGroup):
+    notes = State()
 
 
 class RegUser(StatesGroup):

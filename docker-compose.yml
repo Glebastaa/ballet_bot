@@ -39,3 +39,12 @@ services:
       - db
     volumes:
       - pgadmin_data_ballet:/var/lib/pgadmin
+
+  bot:
+    build: .
+    command: sh -c "make migrate && python -m bot"
+    env_file:
+      - ./.env
+    restart: always
+    depends_on:
+      - db

@@ -2,7 +2,8 @@ from aiogram.types import CallbackQuery
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
 
-from exceptions import StudentAlreadyInGroupError
+from database.models import WeekDays
+from exceptions import IndivIsFull, StudentAlreadyInGroupError
 from services.group import GroupService
 from utils.states import EditStudent
 from bots.keyboards import builders, inline
@@ -16,7 +17,7 @@ group_service = GroupService()
 
 student_list = ['pick_student', 'add_student2', 'delete_students',
                 'fulldelete_student', 'show_group', 'edit_student',
-                'select_student']
+                'select_student', 'select_studentindiv', 'delete_studentindiv']
 
 
 def extract_data_from_callback(
@@ -114,3 +115,39 @@ async def student_callback(
             f'Выберите студию, в которой будет заниматся ученик {student_name}'
         )
         await message.edit_reply_markup(reply_markup=keyboard)
+
+    elif action == 'select_studentindiv':
+        keyboard = await builders.show_list_students_menu(
+            'select_studentindiv'
+        )
+        data = await state.get_data()
+        group_id = data.get('group_id', 1)
+        start_date: WeekDays = data.get('start_date')  # type: ignore
+        start_time = data.get('start_time')
+        try:
+            await student_service.add_student_to_group(
+                student_id, group_id, is_individual=True
+            )
+            await message.edit_text(
+                f'Ученик {student_name} успешно добавлен в индив'
+                f' в {start_date}:{start_time}'
+            )
+            await message.edit_reply_markup(reply_markup=None)
+            await state.clear()
+        except StudentAlreadyInGroupError:
+            await message.edit_text(
+                f'Ученик {student_name} уже добавлен в индив'
+            )
+            await message.edit_reply_markup(reply_markup=keyboard)
+        except IndivIsFull:
+            await message.edit_text('В индиве превышен лимит учеников')
+
+    elif action == 'delete_studentindiv':
+        data = await state.get_data()
+        group_id = data.get('group_id', 1)
+        await student_service.delete_student_from_group(student_id, group_id)
+        await message.edit_text(
+            f'Ученик {student_name} успешно удален из индива'
+        )
+        await message.edit_reply_markup(reply_markup=None)
+        await state.clear()

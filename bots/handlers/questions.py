@@ -1,19 +1,24 @@
+import os
 import re
+
+from dotenv import load_dotenv
 from datetime import datetime
 from aiogram import Router
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
+from bots.handlers.commands import add_main, delete_main, edit_main, show_main
 from schemas.group import GroupSchema
 from database.models import WeekDays, UserRoles
 from exceptions import (
     EntityAlreadyExists,
+    SameRoleError,
     ScheduleTimeInsertionError,
     UserAlreadyExistsError
 )
 from bots.keyboards import builders, inline
 from utils.states import (
-    AddIndiv, AdminPass, EditSchedule, EditStudent,
+    AddIndiv, AddNotes, AdminPass, EditSchedule, EditStudent,
     EditStudio, Studio,
     Group, EditGroup,
     Student, RegUser)
@@ -23,12 +28,32 @@ from services.student import StudentService
 from services.user import UserService
 
 
+load_dotenv()
+
 router = Router()
-ADMIN_PASS = '4321'
+ADMIN_PASS = os.getenv('ADMIN_PASS')
 studio_service = StudioService()
 group_service = GroupService()
 student_service = StudentService()
 user_service = UserService()
+
+
+async def handle_failure(
+        message: Message,
+        state: FSMContext,
+        fail_count: int,
+        error_message: str
+):
+    fail_count += 1
+    if fail_count >= 3:
+        await message.answer(
+            'У вас закончились попытки. Пожалуйста, попробуйте еще раз позже.'
+        )
+        await state.clear()
+        return True
+    await state.update_data(fail_count=fail_count)
+    await message.answer(error_message)
+    return False
 
 
 @router.message(Studio.name)
@@ -116,13 +141,23 @@ async def form_name_group(message: Message, state: FSMContext):
 
 @router.message(Group.start_time)
 async def form_end_add_group(message: Message, state: FSMContext):
-    start_time_str = str(message.text)
+    start_time_str: str = message.text  # type: ignore
     data = await state.get_data()
-    studio_name: str = data.get('studio_name', 'problem')
+    studio_name: str | None = data.get('studio_name')
     start_date: WeekDays = data.get('start_date')  # type: ignore
     group_name: str = data.get('group_name')  # type: ignore
     group_id: int = data.get('group_id')  # type: ignore
     group: GroupSchema = data.get('group')  # type: ignore
+    fail_count: int = data.get('fail_count', 0)
+
+    if start_time_str == '/add':
+        return await add_main(message)
+    elif start_time_str == '/show':
+        return await show_main(message)
+    elif start_time_str == '/delete':
+        return await delete_main(message)
+    elif start_time_str == '/edit':
+        return await edit_main(message)
 
     try:
         start_time = datetime.strptime(start_time_str, '%H:%M').time()
@@ -132,31 +167,48 @@ async def form_end_add_group(message: Message, state: FSMContext):
                 start_time=start_time,
                 start_date=start_date
             )
-            await message.answer(
-                f'Добавлено расписание день - {start_date.value}, время - '
-                f'{start_time} для группы {group.name} в студии {studio_name}'
-            )
+            if studio_name is None:
+                await message.answer(
+                    f'Добавлено расписание день - {start_date.value}, время - '
+                    f'{start_time} для группы {group.name} в студии '
+                    f'{studio_name}'
+                )
+            else:
+                await message.answer(
+                    f'Добавлено расписание день - {start_date.value}, время - '
+                    f'{start_time} для группы {group.name}'
+                )
         else:
             await group_service.add_schedule_to_group(
                 group_id=group_id,
                 start_time=start_time,
                 start_date=start_date
             )
-            await message.answer(
-                f'Добавлено расписание день - {start_date.value}, время - '
-                f'{start_time} для группы {group_name} в студии {studio_name}'
-            )
+            if studio_name is None:
+                await message.answer(
+                    f'Добавлено расписание день - {start_date.value}, время - '
+                    f'{start_time} для группы {group_name} в студии '
+                    f'{studio_name}'
+                )
+            else:
+                await message.answer(
+                    f'Добавлено расписание день - {start_date.value}, время - '
+                    f'{start_time} для группы {group_name}'
+                )
         await state.clear()
     except ValueError:
-        await message.answer(
+        if await handle_failure(
+            message, state, fail_count,
             'Время введено неверно. Пожалуйста, введите время в формате HH:MM.'
-        )
-        return
+        ):
+            return
     except ScheduleTimeInsertionError:
-        await message.answer(
+        if await handle_failure(
+            message, state, fail_count,
             f'Невозможно добавить расписание. Время {start_time} уже занято '
             f'или слишком близко к существующему расписанию.'
-        )
+        ):
+            return
 
 
 @router.message(EditGroup.new_group_name)
@@ -221,11 +273,21 @@ async def form_edit_student_name(message: Message, state: FSMContext):
 
 @router.message(AddIndiv.start_time)
 async def form_add_time_indiv(message: Message, state: FSMContext):
-    start_time_str = str(message.text)
+    start_time_str: str = message.text  # type: ignore
     data = await state.get_data()
     indiv: GroupSchema = data.get('indiv')  # type: ignore
     studio_name: str = data.get('studio_name', '1')
     start_date: WeekDays = data.get('start_date')  # type: ignore
+    fail_count: int = data.get('fail_count', 0)
+
+    if start_time_str == '/add':
+        return await add_main(message)
+    elif start_time_str == '/show':
+        return await show_main(message)
+    elif start_time_str == '/delete':
+        return await delete_main(message)
+    elif start_time_str == '/edit':
+        return await edit_main(message)
 
     try:
         start_time = datetime.strptime(start_time_str, '%H:%M').time()
@@ -240,15 +302,18 @@ async def form_add_time_indiv(message: Message, state: FSMContext):
         )
         await state.clear()
     except ValueError:
-        await message.answer(
+        if await handle_failure(
+            message, state, fail_count,
             'Время введено неверно. Пожалуйста, введите время в формате HH:MM.'
-        )
-        return
+        ):
+            return
     except ScheduleTimeInsertionError:
-        await message.answer(
+        if await handle_failure(
+            message, state, fail_count,
             f'Невозможно добавить расписание. Время {start_time} уже занято '
             f'или слишком близко к существующему расписанию.'
-        )
+        ):
+            return
 
 
 @router.message(RegUser.wait_for_name)
@@ -292,34 +357,55 @@ async def check_admin_pass(message: Message, state: FSMContext):
 @router.message(AdminPass.switch_role)
 async def switch_role(message: Message, state: FSMContext):
     user_name: str = str(message.text)
-    user_id = await UserService().get_user_id_by_username(username=user_name)
-    if user_id:
-        data = await state.get_data()
-        switch_role: UserRoles = data.get('switch_role')  # type: ignore
-        await UserService().switch_to_another_role(
-            telegram_id=user_id, role=switch_role
-        )
+    user = user_id = await UserService().get_user_id_by_username(
+        username=user_name
+    )
+    if user is None:
         await message.answer(
-            f'Роль для {user_name} изменена на {switch_role.value}'
-        )
-        await message.answer(
-            'Выберите действие',
-            reply_markup=inline.show_admin_menu_kb()
+            f'Пользователь {user_name} не найден.'
         )
         await state.clear()
     else:
-        await message.answer(
-            f'Пользователь {user_name} не найден. '
-            'Попробуйте ввести логин еще раз'
-        )
+        try:
+            user_id = await UserService().get_user_id_by_username(
+                username=user_name
+            )
+            data = await state.get_data()
+            switch_role: UserRoles = data.get('switch_role')  # type: ignore
+            await UserService().switch_to_another_role(
+                telegram_id=user_id, role=switch_role  # type: ignore
+            )
+            await message.answer(
+                f'Роль для {user_name} изменена на {switch_role.value}'
+            )
+            await message.answer(
+                'Выберите действие',
+                reply_markup=inline.show_admin_menu_kb()
+            )
+            await state.clear()
+        except SameRoleError:
+            await message.answer(
+                f'Роль для {user_name} уже изменена на {switch_role.value}'
+            )
+            await state.clear()
 
 
 @router.message(EditSchedule.start_time)
 async def form_end_edit_schedule_to_group(message: Message, state: FSMContext):
-    start_time_str = str(message.text)
+    start_time_str: str = message.text  # type: ignore
     data = await state.get_data()
     schedule_id: int = data.get('schedule_id', 1)
     start_date: WeekDays = data.get('start_date')  # type: ignore
+    fail_count: int = data.get('fail_count', 0)
+
+    if start_time_str == '/add':
+        return await add_main(message)
+    elif start_time_str == '/show':
+        return await show_main(message)
+    elif start_time_str == '/delete':
+        return await delete_main(message)
+    elif start_time_str == '/edit':
+        return await edit_main(message)
 
     try:
         start_time = datetime.strptime(start_time_str, '%H:%M').time()
@@ -334,12 +420,35 @@ async def form_end_edit_schedule_to_group(message: Message, state: FSMContext):
         )
         await state.clear()
     except ValueError:
-        await message.answer(
+        if await handle_failure(
+            message, state, fail_count,
             'Время введено неверно. Пожалуйста, введите время в формате HH:MM.'
-        )
-        return
+        ):
+            return
     except ScheduleTimeInsertionError:
-        await message.answer(
+        if await handle_failure(
+            message, state, fail_count,
             f'Невозможно добавить расписание. Время {start_time} уже занято '
             f'или слишком близко к существующему расписанию.'
-        )
+        ):
+            return
+
+
+@router.message(AddNotes.notes)
+async def form_add_notes_for_group(message: Message, state: FSMContext):
+    note: str = str(message.text)
+    data = await state.get_data()
+    group_id: int = data.get('group_id', 1)
+    group_name: str = data.get('group_name', 'problem')
+    keyboard = inline.select_group_for_studio_kb(
+        group_name=group_name,
+        group_id=group_id,
+        studio_name=None,
+        studio_id=None
+    )
+    await group_service.edit_group(group_id=group_id, notes=note)
+    await message.answer(
+        f'Заметка добавленна в группу {group_name}',
+        reply_markup=keyboard,
+    )
+    await state.clear()

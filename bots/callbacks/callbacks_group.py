@@ -6,7 +6,7 @@ from exceptions import StudentAlreadyInGroupError
 from bots.keyboards import inline, builders
 from services.group import GroupService
 from services.student import StudentService
-from utils.states import EditGroup
+from utils.states import AddNotes, EditGroup
 
 
 router = Router()
@@ -16,7 +16,8 @@ student_service = StudentService()
 
 group_list = ['pick_group', 'delete_group', 'edit_group', 'add_shedule',
               'add_student', 'list_students', 'delete_student', 'pick_groups',
-              'add_student3', 'delete_indiv', 'show_schedule']
+              'add_student3', 'show_schedule', 'addgroup_notes',
+              'showgroup_notes', 'deletegroup_notes']
 
 
 def extract_data_from_callback(
@@ -39,7 +40,7 @@ async def group_callback(
 
     if action == 'pick_group':
         studio_name = callback.data.split('_')[5]
-        studio_id: int = callback.data.split('_')[6]  # type: ignore
+        studio_id: int = callback.data.split('_')[6]   # type: ignore
         keyboard = inline.select_group_for_studio_kb(
             group_name, group_id, studio_name, studio_id
         )
@@ -60,12 +61,10 @@ async def group_callback(
         await message.edit_reply_markup(reply_markup=None)
 
     elif action == 'add_shedule':
-        studio_id: int = int(callback.data.split('_')[5])
-        studio_name: str = callback.data.split('_')[6]
+        studio_name: str | None = callback.data.split('_')[6]
         await state.update_data(
             group_name=group_name,
             group_id=group_id,
-            studio_id=studio_id,
             studio_name=studio_name
         )
         await message.edit_text(
@@ -122,10 +121,8 @@ async def group_callback(
             await message.edit_reply_markup(reply_markup=None)
 
     elif action == 'pick_groups':
-        #  student_name: str = callback.data.split('_')[5]
-        #  student_id: int = int(callback.data.split('_')[6])
         keyboard = inline.select_student_for_group_kb(group_name, group_id)
-        await message.edit_text('Выбери сцука')
+        await message.edit_text('Выбери')
         await message.edit_reply_markup(reply_markup=keyboard)
 
     elif action == 'add_student3':
@@ -158,11 +155,6 @@ async def group_callback(
                 reply_markup=keyboard
             )
 
-    elif action == 'delete_indiv':
-        await group_service.delete_group(group_id)
-        await message.answer(f'Индив {group_name} успешно удалена')
-        await message.edit_reply_markup(reply_markup=None)
-
     elif action == 'show_schedule':
         schedules = await group_service.get_date_time_group(group_id=group_id)
         if schedules:
@@ -178,3 +170,45 @@ async def group_callback(
         else:
             await message.edit_text('В группе нет занятий')
             await message.edit_reply_markup(reply_markup=None)
+
+    elif action == 'addgroup_notes':
+        await state.update_data(
+            group_name=group_name,
+            group_id=group_id,
+        )
+        await state.set_state(AddNotes.notes)
+        await message.edit_text(
+            f'Напишите заметку для группы {group_name}'
+        )
+        await message.edit_reply_markup(reply_markup=None)
+
+    elif action == 'showgroup_notes':
+        keyboard = inline.select_group_for_studio_kb(
+            group_name=group_name,
+            group_id=group_id,
+            studio_name=None,
+            studio_id=None
+        )
+        note = await group_service.get_notes(group_id)
+        if note:
+            await message.edit_text(note)
+            await message.edit_reply_markup(reply_markup=keyboard)
+        else:
+            await message.edit_text(f'Заметок в группе {group_name} - нет')
+            await message.edit_reply_markup(reply_markup=keyboard)
+
+    elif action == 'deletegroup_notes':
+        keyboard = inline.select_group_for_studio_kb(
+            group_name=group_name,
+            group_id=group_id,
+            studio_name=None,
+            studio_id=None
+        )
+        notes = await group_service.get_notes(group_id)
+        if notes:
+            await group_service.delete_notes(group_id)
+            await message.edit_text(f'Заметка удаленна в группе {group_name}')
+            await message.edit_reply_markup(reply_markup=keyboard)
+        else:
+            await message.edit_text(f'Заметок в группе {group_name} - нет')
+            await message.edit_reply_markup(reply_markup=keyboard)

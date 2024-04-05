@@ -35,7 +35,7 @@ def roles_user_required(allowed_roles: List[str]):
             user_role = await user_service.get_user_by_id(telegram_id=user_id)
             if user_role.role.value not in allowed_roles:
                 await message.answer(
-                    'У вас нет прав для выполнения этой команды!'
+                    'У вас нет прав для выполнения этой команды! '
                     'Если это ошибка, обратитесь к руководителю студии'
                 )
                 return

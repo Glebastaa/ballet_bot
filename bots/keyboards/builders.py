@@ -79,16 +79,6 @@ async def process_select_weekdays(action: str):
     return keyboard.adjust(2).as_markup()
 
 
-async def show_list_indiv_menu(action: str, studio_name: str, studio_id: int):
-    return await add_button_to_kb(
-        InlineKeyboardBuilder(),
-        await GroupService().get_groups(studio_id, is_individual=True),
-        action,
-        extra_data=studio_name,
-        extra_data2=studio_id
-    )
-
-
 async def show_users_for_role(users: list[UserSchema], role: str):
     keyboard = InlineKeyboardBuilder()
     for user in users:
@@ -120,6 +110,22 @@ async def show_list_schedules_for_group(
         keyboard.add(InlineKeyboardButton(
             text=f'{schedule.start_date.value}, {schedule.start_time}',
             callback_data=f'{action}_{schedule.start_date.value}_'
-                          f'{schedule.start_time}_{schedule.id}'
+                          f'{schedule.start_time}_{schedule.id}_'
+                          f'{schedule.group_id}'
+        ))
+    return keyboard.adjust(2).as_markup()
+
+
+async def show_list_schedules_for_studios(
+        action: str,
+        schedules: list[ScheduleSchema]
+):
+    keyboard = InlineKeyboardBuilder()
+    for schedule in schedules:
+        keyboard.add(InlineKeyboardButton(
+            text=f'{schedule.start_date.value}, {schedule.start_time}',
+            callback_data=f'{action}_{schedule.start_date.value}_'
+                          f'{schedule.start_time}_{schedule.id}_'
+                          f'{schedule.group_id}'
         ))
     return keyboard.adjust(2).as_markup()
