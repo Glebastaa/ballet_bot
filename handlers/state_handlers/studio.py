@@ -1,17 +1,18 @@
 import re
+
 from aiogram import Router
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
 from exceptions import EntityAlreadyExists
-from utils.states import EditStudio, Studio
 from services.studio import StudioService
+from utils.states import AddStudio, EditStudio
 
 
 router = Router()
 
 
-@router.message(Studio.name)
+@router.message(AddStudio.name)
 async def step_add_name_studio(message: Message, state: FSMContext):
     "Check and add studio to table studios"
     studio_name = message.text

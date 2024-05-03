@@ -1,12 +1,16 @@
-from aiogram.types import CallbackQuery
 from aiogram import F, Router
+from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
+
 from keyboards import inline, builders
-from services.group import GroupService
 from services.studio import StudioService
-from utils.states import EditStudio
+from services.group import GroupService
+from utils.states import AddGroup, EditStudio
+
 
 router = Router()
+studio_service = StudioService()
+group_service = GroupService()
 
 
 def extract_data_from_callback(callback: CallbackQuery, index1=1, index2=2):
@@ -14,7 +18,7 @@ def extract_data_from_callback(callback: CallbackQuery, index1=1, index2=2):
     return data[index1], int(data[index2])
 
 
-@router.callback_query(F.data.startswith('listStudio_'))
+@router.callback_query(F.data.startswith('listStudio'))
 async def list_studio(callback: CallbackQuery):
     "Show the list of studios from the main menu"
     studio_name, studio_id = extract_data_from_callback(callback)
@@ -24,7 +28,7 @@ async def list_studio(callback: CallbackQuery):
     await callback.message.edit_reply_markup(reply_markup=kb)
 
 
-@router.callback_query(F.data.startswith('editStudio_'))
+@router.callback_query(F.data.startswith('editStudio'))
 async def edit_studio(callback: CallbackQuery, state: FSMContext):
     "Editing the studio name"
     studio_name, studio_id = extract_data_from_callback(callback)
@@ -36,20 +40,20 @@ async def edit_studio(callback: CallbackQuery, state: FSMContext):
     )
 
 
-@router.callback_query(F.data.startswith('deleteStudio_'))
+@router.callback_query(F.data.startswith('deleteStudio'))
 async def delete_studio(callback: CallbackQuery):
     "Delete studio"
     studio_name, studio_id = extract_data_from_callback(callback)
 
-    await StudioService().delete_studio(studio_id)
+    await studio_service.delete_studio(studio_id)
     await callback.message.answer(f'Студия {studio_name} успешно удалена!')
 
 
-@router.callback_query(F.data.startswith('listGroupsByStudio_'))
+@router.callback_query(F.data.startswith('listGroupsByStudio'))
 async def list_groups_by_studio(callback: CallbackQuery):
     "Show the list groups from the pick studio"
     studio_name, studio_id = extract_data_from_callback(callback)
-    groups = await GroupService().get_groups(studio_id)
+    groups = await group_service.get_groups(studio_id)
     if not groups:
         await callback.message.edit_text(
             f'Увы, в студии {studio_name} пока нет групп. '
@@ -69,12 +73,13 @@ async def list_groups_by_studio(callback: CallbackQuery):
         ))
 
 
-@router.callback_query(F.data.startswith('selectGroupByStudio_'))
-async def show_group_menu(callback: CallbackQuery):
-    "Group menu"
-    group_name, group_id = extract_data_from_callback(callback)
-    studio_name = callback.data.split('_')[3]
-    kb = inline.select_group_for_studio_kb(group_name, group_id, studio_name)
+@router.callback_query(F.data.startswith('addGroupBySelectStudio'))
+async def step1_add_group(callback: CallbackQuery, state: FSMContext):
+    "Step 1. Select studio by add group"
+    studio_name, studio_id = extract_data_from_callback(callback)
 
-    await callback.message.edit_text(f'Выбрана группа {group_name}')
-    await callback.message.edit_reply_markup(reply_markup=kb)
+    await state.update_data(studio_name=studio_name, studio_id=studio_id)
+    await state.set_state(AddGroup.name)
+    await callback.message.edit_text(
+        f'Введите название для новой группы в студии {studio_name}'
+    )

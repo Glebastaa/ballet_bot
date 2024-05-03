@@ -25,29 +25,13 @@ async def show_list_studios_menu(action: str):
     )
 
 
-async def show_delete_studios_menu():
-    return await add_button_to_kb(InlineKeyboardBuilder(), await StudioService().get_studios(), "delete_studio")
-
-
-async def show_edit_studios_menu():
-    return await add_button_to_kb(InlineKeyboardBuilder(), await StudioService().get_studios(), "edit_studio")
-
-
-async def process_select_studio_for_group():
-    return await add_button_to_kb(InlineKeyboardBuilder(), await StudioService().get_studios(), "select_studio")
-
-
-async def process_select_weekdays_kb():
+async def select_weekdays(action: str):
     keyboard = InlineKeyboardBuilder()
     for day in WeekDays:
-        keyboard.add(InlineKeyboardButton(text=day.value, callback_data=f"select_weekday_{day.value}"))
-    return keyboard.adjust(2).as_markup()
-
-
-async def process_select_weekdays_indiv():
-    keyboard = InlineKeyboardBuilder()
-    for day in WeekDays:
-        keyboard.add(InlineKeyboardButton(text=day.value, callback_data=f"weekday_indiv_{day.value}"))
+        keyboard.add(InlineKeyboardButton(
+            text=day.value,
+            callback_data=f'{action}_{day.value}')
+        )
     return keyboard.adjust(2).as_markup()
 
 

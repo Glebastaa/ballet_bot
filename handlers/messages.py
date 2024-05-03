@@ -2,14 +2,14 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from keyboards import builders
-from utils.states import Studio
+from utils.states import AddGroup, AddStudio
 
 
 router = Router()
 
 @router.message(F.text.lower() == "добавить студию")
 async def form_add_studio(message: Message, state: FSMContext):
-    await state.set_state(Studio.name)
+    await state.set_state(AddStudio.name)
     await message.answer("Введите название студии:")
 
 
@@ -25,7 +25,7 @@ async def message_list_studios(message: Message):
 async def message_delete_studio(message: Message):
     await message.answer(
         "Выберите студию для удаления:",
-        reply_markup=await builders.show_delete_studios_menu()
+        reply_markup=await builders.show_list_studios_menu('deleteStudio')
     )
 
 
@@ -33,14 +33,18 @@ async def message_delete_studio(message: Message):
 async def form_change_name_studio(message: Message):
     await message.answer(
         "Выберите студию для изменения имени:",
-        reply_markup=await builders.show_edit_studios_menu()
+        reply_markup=await builders.show_list_studios_menu('editStudio')
     )
 
 
 @router.message(F.text.lower() == "добавить группу")
-async def form_add_group(message: Message, state: FSMContext):
-    await state.set_state(Group.group_name)
-    await message.answer("Введите название группы:")
+async def form_add_group(message: Message):
+    await message.answer(
+        'Выберите студию, в которую хотите добавить группу',
+        reply_markup=await builders.show_list_studios_menu(
+            action='addGroupBySelectStudio'
+        )
+    )
 
 
 @router.message(F.text.lower() == "список групп")

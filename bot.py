@@ -1,7 +1,9 @@
 import asyncio
 import logging
 
-from handlers import commands, messages, state_handlers, callbacks
+from handlers import commands, messages
+from handlers.callbacks import callback_router
+from handlers.state_handlers import state_router
 from aiogram import Bot, Dispatcher
 from config import settings
 
@@ -13,8 +15,8 @@ async def main():
 
     dp.include_routers(
         messages.router,
-        state_handlers.router,
-        callbacks.router,
+        state_router.router,
+        callback_router.router,
         commands.router,
     )
 
