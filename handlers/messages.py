@@ -2,7 +2,7 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from keyboards import builders
-from utils.states import Studio, Group, Student
+from utils.states import Studio
 
 
 router = Router()
@@ -17,7 +17,7 @@ async def form_add_studio(message: Message, state: FSMContext):
 async def message_list_studios(message: Message):
     await message.answer(
         "Список студий:",
-        reply_markup=await builders.show_list_studios_menu()
+        reply_markup=await builders.show_list_studios_menu('listStudio')
     )
 
 
@@ -71,12 +71,6 @@ async def form_add_student_to_group(message: Message):
         "Список учеников:",
         reply_markup=await builders.show_list_students_menu()
     )
-
-
-@router.message(Group.start_date, F.text)
-async def start_date_wrong_input(message: Message):
-    await message.reply("Пожалуйста, используйте кнопки для выбора дня занятия")
-    await message.answer("Выберите день занятия", reply_markup=await builders.process_select_weekdays_kb())
 
 
 @router.message(F.text.lower() == "добавить индив")

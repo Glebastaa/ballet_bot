@@ -5,13 +5,23 @@ def create_studio_kb(studio_name: str, studio_id: int) -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(text="Изменить имя студии", callback_data=f"edit_studio_{studio_name}_{studio_id}")
+                InlineKeyboardButton(
+                    text='Изменить имя студии',
+                    callback_data=f'editStudio_{studio_name}_{studio_id}'
+                )
             ],
             [
-                InlineKeyboardButton(text="Удалить студию", callback_data=f"delete_studio_{studio_name}_{studio_id}")
+                InlineKeyboardButton(
+                    text='Удалить студию',
+                    callback_data=f'deleteStudio_{studio_name}_{studio_id}'
+                )
             ],
             [
-                InlineKeyboardButton(text="Список групп", callback_data=f"list_group_{studio_name}_{studio_id}")
+                InlineKeyboardButton(
+                    text='Список групп',
+                    callback_data=f'listGroupsByStudio_'
+                                  f'{studio_name}_{studio_id}'
+                )
             ]
         ],
     )
