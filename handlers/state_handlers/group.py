@@ -6,12 +6,12 @@ from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
 from database.models import WeekDays
-from handlers.commands import add_main, delete_main, edit_main, show_main
+from handlers.commands import add_main
 from schemas.group import GroupSchema
 from services.group import GroupService
 from exceptions import EntityAlreadyExists, ScheduleTimeInsertionError
-from utils.states import AddGroup
-from keyboards import builders
+from utils.states import AddGroup, EditGroup
+from keyboards import builders, inline
 
 
 router = Router()
@@ -74,19 +74,15 @@ async def step4_add_group(message: Message, state: FSMContext):
     start_time_str = str(message.text)
     data = await state.get_data()
     studio_name: str = data.get('studio_name')
+    studio_id: int = data.get('studio_id')
     start_date: WeekDays = data.get('start_date')
     group_name: str = data.get('group_name')
+    group_id: int = data.get('group_id')
     group: GroupSchema = data.get('group')
     fail_count: int = data.get('fail_count', 0)
 
-    if start_time_str == '/add':
+    if start_time_str == '/main':
         return await add_main(message)
-    elif start_time_str == '/show':
-        return await show_main(message)
-    elif start_time_str == '/delete':
-        return await delete_main(message)
-    elif start_time_str == '/edit':
-        return await edit_main(message)
 
     try:
         await group_service.add_schedule_to_group(
@@ -97,6 +93,15 @@ async def step4_add_group(message: Message, state: FSMContext):
         await message.answer(
             f'Добавлено расписание день - {start_date.value}, время - '
             f'{start_time_str} для группы {group_name} в студии {studio_name}'
+        )
+        await message.answer(
+            f'Выбрана группа {group_name}',
+            reply_markup=inline.select_group_for_studio_kb(
+                group_name,
+                group_id,
+                studio_name,
+                studio_id
+            )
         )
         await state.clear()
     except ValueError:
@@ -112,3 +117,36 @@ async def step4_add_group(message: Message, state: FSMContext):
             'занято или слишком близко к существующему расписанию.'
         ):
             return
+
+
+@router.message(EditGroup.name)
+async def edit_group_name(message: Message, state: FSMContext):
+    new_group_name = message.text
+    data = await state.get_data()
+    group_name = data.get('group_name')
+    group_id = data.get('group_id')
+    studio_name = data.get('studio_name')
+    studio_id = data.get('studio_id')
+
+    if new_group_name == group_name:
+        await message.answer(
+            'Имя группы не может быть таким же, как и до этого. '
+            'Попробуйте снова'
+        )
+    elif re.match(r'^[а-яА-ЯёЁ0-9\s\-]+$', new_group_name):
+        await group_service.edit_group(group_id, new_group_name)
+        await message.answer(
+            f'Группа {group_name} успешно изменена на {new_group_name}',
+            reply_markup=inline.select_group_for_studio_kb(
+                group_name=new_group_name,
+                group_id=group_id,
+                studio_name=studio_name,
+                studio_id=studio_id
+            )
+        )
+        await state.clear()
+    else:
+        await message.answer(
+            'Пожалуйста, введите имя группы корректно, '
+            'используя только русские буквы. Попробуйте снова:'
+        )

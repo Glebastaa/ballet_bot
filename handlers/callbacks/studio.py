@@ -18,11 +18,11 @@ def extract_data_from_callback(callback: CallbackQuery, index1=1, index2=2):
     return data[index1], int(data[index2])
 
 
-@router.callback_query(F.data.startswith('listStudio'))
-async def list_studio(callback: CallbackQuery):
+@router.callback_query(F.data.startswith('selectStudio'))
+async def list_studios(callback: CallbackQuery):
     "Show the list of studios from the main menu"
     studio_name, studio_id = extract_data_from_callback(callback)
-    kb = inline.create_studio_kb(studio_name, studio_id)
+    kb = inline.menu_studio_kb(studio_name, studio_id)
 
     await callback.message.edit_text(f'Выбрана студия {studio_name}')
     await callback.message.edit_reply_markup(reply_markup=kb)
@@ -50,26 +50,23 @@ async def delete_studio(callback: CallbackQuery):
 
 
 @router.callback_query(F.data.startswith('listGroupsByStudio'))
-async def list_groups_by_studio(callback: CallbackQuery):
+async def list_groups_by_studio(callback: CallbackQuery, state: FSMContext):
     "Show the list groups from the pick studio"
     studio_name, studio_id = extract_data_from_callback(callback)
     groups = await group_service.get_groups(studio_id)
     if not groups:
+        await state.update_data(studio_name=studio_name, studio_id=studio_id)
+        await state.set_state(AddGroup.name)
         await callback.message.edit_text(
             f'Увы, в студии {studio_name} пока нет групп. '
-            'Пожалуйста, выберите другую студию.'
+            'Давайте ее создадим. Введите имя для группы'
         )
-        await callback.message.edit_reply_markup(
-            reply_markup=await builders.show_list_studios_menu(
-                'listGroupsByStudio'
-            )
-        )
-        return
+        await callback.message.edit_reply_markup(reply_markup=None)
 
     await callback.message.edit_text(f'Список групп для студии {studio_name}')
     await callback.message.edit_reply_markup(
         reply_markup=await builders.show_list_groups_for_studio(
-            studio_name, studio_id
+            'selectGroupByStudio', studio_name, studio_id
         ))
 
 
@@ -83,3 +80,39 @@ async def step1_add_group(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
         f'Введите название для новой группы в студии {studio_name}'
     )
+
+
+@router.callback_query(F.data.startswith('editGroupBySelectStudio'))
+async def edit_group_name(callback: CallbackQuery):
+    "Select group to change name"
+    studio_name, studio_id = extract_data_from_callback(callback)
+    kb = await builders.show_list_groups_for_studio(
+        'editGroupName', studio_name, studio_id
+    )
+    await callback.message.edit_text(
+        f'Выберите группу в студии {studio_name} для смены имени:'
+    )
+    await callback.message.edit_reply_markup(
+        reply_markup=kb
+    )
+
+
+@router.callback_query(F.data.startswith('selectStudioByAddStudent'))
+async def step2_add_student_to_group(
+    callback: CallbackQuery,
+    state: FSMContext
+):
+    "Step 2. Save studio to state and transition to select group"
+    studio_name, studio_id = extract_data_from_callback(callback)
+    kb = await builders.show_list_groups_for_studio(
+        'selectGroupByAddStudent', studio_name, studio_id
+    )
+    data = await state.get_data()
+    student_name = data.get('student_name')
+
+    await state.update_data(studio_name=studio_name, studio_id=studio_id)
+    await callback.message.edit_text(
+        f'Выбериту группу в студии {studio_name}, в '
+        f'которой будет заниматся {student_name}'
+    )
+    await callback.message.edit_reply_markup(reply_markup=kb)

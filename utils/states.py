@@ -13,3 +13,15 @@ class AddGroup(StatesGroup):
     name = State()
     start_time = State()
     test = State()
+
+
+class EditGroup(StatesGroup):
+    name = State()
+
+
+class AddStudent(StatesGroup):
+    name = State()
+
+
+class EditStudent(StatesGroup):
+    name = State()
