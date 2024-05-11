@@ -1,5 +1,7 @@
 from datetime import datetime, time
+import random
 import re
+import string
 
 from aiogram import Router
 from aiogram.types import Message
@@ -10,7 +12,7 @@ from handlers.commands import add_main
 from schemas.group import GroupSchema
 from services.group import GroupService
 from exceptions import EntityAlreadyExists, ScheduleTimeInsertionError
-from utils.states import AddGroup, EditGroup
+from utils.states import AddGroup, AddIndiv, AddNotes, EditGroup
 from keyboards import builders, inline
 
 
@@ -85,24 +87,41 @@ async def step4_add_group(message: Message, state: FSMContext):
         return await add_main(message)
 
     try:
-        await group_service.add_schedule_to_group(
-            group_id=group.id,
-            start_time=datetime.strptime(start_time_str, '%H:%M').time(),
-            start_date=start_date
-        )
-        await message.answer(
-            f'Добавлено расписание день - {start_date.value}, время - '
-            f'{start_time_str} для группы {group_name} в студии {studio_name}'
-        )
-        await message.answer(
-            f'Выбрана группа {group_name}',
-            reply_markup=inline.select_group_for_studio_kb(
-                group_name,
-                group_id,
-                studio_name,
-                studio_id
+        if not group_id:
+            await group_service.add_schedule_to_group(
+                group_id=group.id,
+                start_time=datetime.strptime(start_time_str, '%H:%M').time(),
+                start_date=start_date
             )
-        )
+            await message.answer(
+                f'Добавлено расписание день - {start_date.value}, время - '
+                f'{start_time_str} для группы {group_name} '
+                f'в студии {studio_name}'
+            )
+            await message.answer(
+                f'Выбрана группа {group_name}',
+                reply_markup=inline.select_group_for_studio_kb(
+                    group_name=group_name, group_id=group.id,
+                    studio_name=studio_name, studio_id=studio_id
+                )
+            )
+        else:
+            await group_service.add_schedule_to_group(
+                group_id=group_id,
+                start_time=datetime.strptime(start_time_str, '%H:%M').time(),
+                start_date=start_date
+            )
+            await message.answer(
+                f'Добавлено расписание день - {start_date.value}, время - '
+                f'{start_time_str} для группы {group_name} '
+                f'в студии {studio_name}'
+            )
+            await message.answer(
+                f'Выбрана группа {group_name}',
+                reply_markup=inline.select_group_for_studio_kb(
+                    group_name, group_id, studio_name, studio_id
+                )
+            )
         await state.clear()
     except ValueError:
         if await handle_failure(
@@ -114,7 +133,8 @@ async def step4_add_group(message: Message, state: FSMContext):
         if await handle_failure(
             message, state, fail_count,
             f'Невозможно добавить расписание. Время {start_time_str} уже '
-            'занято или слишком близко к существующему расписанию.'
+            'занято или слишком близко к существующему расписанию.\n'
+            'Попробуйте ввести другое время'
         ):
             return
 
@@ -150,3 +170,74 @@ async def edit_group_name(message: Message, state: FSMContext):
             'Пожалуйста, введите имя группы корректно, '
             'используя только русские буквы. Попробуйте снова:'
         )
+
+
+@router.message(AddIndiv.start_time)
+async def step3_add_indiv(message: Message, state: FSMContext):
+    "TODO"
+    start_time_str = str(message.text)
+    data = await state.get_data()
+    studio_name: str = data.get('studio_name')
+    studio_id: int = data.get('studio_id')
+    start_date: WeekDays = data.get('start_date')
+    fail_count: int = data.get('fail_count', 0)
+
+    if start_time_str == '/main':
+        return await add_main(message)
+    
+    try:
+        group = await group_service.add_group(
+            group_name=''.join(random.choices(string.ascii_lowercase, k=15)),
+            studio_id=studio_id,
+            is_individual=True
+        )
+        start_time = datetime.strptime(start_time_str, '%H:%M').time()
+        await group_service.add_schedule_to_group(
+            group_id=group.id,
+            start_time=start_time,
+            start_date=start_date
+        )
+        await message.answer(
+            f'Индивидуальное занятие в студии {studio_name} '
+            f'в {start_date.value} : {start_time} добавлено в рассписание'
+        )
+        await message.answer(
+            f'Выбрана студия {studio_name}',
+            reply_markup=inline.menu_studio_kb(studio_name, studio_id)
+        )
+        await state.clear()
+    except ValueError:
+        if await handle_failure(
+            message, state, fail_count,
+            'Время введено неверно. Пожалуйста, введите время в формате HH:MM'
+        ):
+            return
+    except ScheduleTimeInsertionError:
+        if await handle_failure(
+            message, state, fail_count,
+            f'Невозможно добавить расписание. Время {start_time} уже занято '
+            f'или слишком близко к существующему расписанию.\n'
+            'Попробуйте ввести другое время'
+        ):
+            return
+
+
+@router.message(AddNotes.notes)
+async def step2_add_group_notes(message: Message, state: FSMContext):
+    notes = message.text
+    data = await state.get_data()
+    group_name = data.get('group_name')
+    group_id = data.get('group_id')
+    studio_name = data.get('studio_name')
+    studio_id = data.get('studio_id')
+    kb = inline.select_group_for_studio_kb(
+        group_name, group_id, studio_name, studio_id
+    )
+
+    await group_service.edit_group(group_id=group_id, notes=notes)
+    await message.answer(
+        f'Заметка добавлена в группу {group_name}\n'
+        f'Выбрана группа {group_name}',
+        reply_markup=kb
+    )
+    await state.clear()

@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from keyboards import inline, builders
 from services.group import GroupService
 from services.student import StudentService
-from utils.states import AddStudent, EditGroup
+from utils.states import AddNotes, EditGroup
 
 router = Router()
 student_service = StudentService()
@@ -62,20 +62,6 @@ async def delete_group(callback: CallbackQuery):
         f'Группа {group_name} удалена\nВыбрана студия {studio_name}'
     )
     await callback.message.edit_reply_markup(reply_markup=kb)
-
-
-@router.callback_query(F.data.startswith('deleteStudentFromGroup'))
-async def delete_student_by_group(callback: CallbackQuery):
-    "Removing a student from a group"
-    group_name, group_id = extract_data_from_callback(callback)
-    student_name = callback.data.split('_')[3]
-    student_id: int = callback.data.split('_')[4]
-
-    await student_service.delete_student_from_group(student_id, group_id)
-    await callback.message.edit_text(
-        f'Ученик {student_name} удален из группы {group_name}'
-    )
-    await callback.message.edit_reply_markup(reply_markup=None)
 
 
 @router.callback_query(F.data.startswith('selectStudentToGroup'))
@@ -157,3 +143,151 @@ async def step1_delete_student_to_group(
             f'В этой группе еще нет студентов\nВыбрана группа {group_name}'
         )
         await callback.message.edit_reply_markup(reply_markup=kb)
+
+
+@router.callback_query(F.data.startswith('addScheduleGroup'))
+async def step1_add_group_schedule(
+    callback: CallbackQuery, state: FSMContext
+):
+    "Step 1. Add schedule to group"
+    group_name, group_id = extract_data_from_callback(callback)
+    studio_name = callback.data.split('_')[3]
+    studio_id: int = callback.data.split('_')[4]
+    kb = await builders.select_weekdays('weekdayGroup')
+
+    await state.update_data(
+        group_name=group_name, group_id=group_id,
+        studio_name=studio_name, studio_id=studio_id
+    )
+    await callback.message.edit_text(
+                'Выберите день, когда будет проходить '
+                f'занятии в группе {group_name}',
+    )
+    await callback.message.edit_reply_markup(reply_markup=kb)
+
+
+@router.callback_query(F.data.startswith('showScheduleGroup'))
+async def show_group_schedule(callback: CallbackQuery):
+    "Show group schedule"
+    group_name, group_id = extract_data_from_callback(callback)
+    studio_name = callback.data.split('_')[3]
+    studio_id: int = callback.data.split('_')[4]
+    schedules = await group_service.get_date_time_group(group_id)
+    if schedules:
+        kb = inline.back_to_group_menu(
+            group_name, group_id, studio_name, studio_id
+        )
+        list_schedules = '\n'.join([
+            f'{schedule.start_date.value} : {schedule.start_time}'
+            for schedule in schedules
+        ])
+
+        await callback.message.edit_text(
+            f'Список занятий:\n{list_schedules}'
+        )
+        await callback.message.edit_reply_markup(reply_markup=kb)
+    else:
+        kb = inline.select_group_for_studio_kb(
+            group_name, group_id, studio_name, studio_id
+        )
+        await callback.message.edit_text(
+            f'В этой группе еще нету занятий\nВыбрана группа {group_name}'
+        )
+        await callback.message.edit_reply_markup(reply_markup=kb)
+
+
+@router.callback_query(F.data.startswith('deleteScheduleGroup'))
+async def step1_delete_group_schedule(
+    callback: CallbackQuery, state: FSMContext
+):
+    "delete schedule group"
+    group_name, group_id = extract_data_from_callback(callback)
+    studio_name = callback.data.split('_')[3]
+    studio_id: int = callback.data.split('_')[4]
+    schedules = await group_service.get_date_time_group(group_id)
+
+    await state.update_data(
+        group_name=group_name, group_id=group_id,
+        studio_name=studio_name, studio_id=studio_id
+    )
+    if schedules:
+        kb = await builders.show_list_schedules_to_group(
+            'deleteScheduleGroup2', schedules
+        )
+        await callback.message.edit_text(
+            'Выберите занятие, которое хотите удалить'
+        )
+        await callback.message.edit_reply_markup(reply_markup=kb)
+    else:
+        kb = inline.select_group_for_studio_kb(
+            group_name, group_id, studio_name, studio_id
+        )
+        await callback.message.edit_text(
+            f'В этой группе еще нету занятий\nВыбрана группа {group_name}'
+        )
+        await callback.message.edit_reply_markup(reply_markup=kb)
+
+
+@router.callback_query(F.data.startswith('addNotesToGroup'))
+async def step1_add_group_note(
+    callback: CallbackQuery, state: FSMContext
+):
+    "TODO"
+    group_name, group_id = extract_data_from_callback(callback)
+    studio_name = callback.data.split('_')[3]
+    studio_id: int = callback.data.split('_')[4]
+
+    await state.update_data(
+        group_name=group_name, group_id=group_id,
+        studio_name=studio_name, studio_id=studio_id
+    )
+    await state.set_state(AddNotes.notes)
+    await callback.message.edit_text(
+        f'Напишите заметку для группы {group_name}'
+    )
+    await callback.message.edit_reply_markup(reply_markup=None)
+
+
+@router.callback_query(F.data.startswith('showNotesToGroup'))
+async def show_group_note(callback: CallbackQuery):
+    "TODO"
+    group_name, group_id = extract_data_from_callback(callback)
+    studio_name = callback.data.split('_')[3]
+    studio_id: int = callback.data.split('_')[4]
+    note = await group_service.get_notes(group_id)
+    if note:
+        kb = inline.back_to_group_menu(
+            group_name, group_id, studio_name, studio_id
+        )
+        await callback.message.edit_text(note)
+        await callback.message.edit_reply_markup(reply_markup=kb)
+    else:
+        kb = inline.select_group_for_studio_kb(
+            group_name, group_id, studio_name, studio_id
+        )
+        await callback.message.edit_text(
+            f'В группе {group_name} заметки не найдено'
+        )
+        await callback.message.edit_reply_markup(reply_markup=kb)
+
+
+@router.callback_query(F.data.startswith('deleteNotesGroup'))
+async def delete_group_note(callback: CallbackQuery):
+    "TODO"
+    group_name, group_id = extract_data_from_callback(callback)
+    studio_name = callback.data.split('_')[3]
+    studio_id: int = callback.data.split('_')[4]
+    note = await group_service.get_notes(group_id)
+    kb = inline.select_group_for_studio_kb(
+            group_name, group_id, studio_name, studio_id
+        )
+    if note:
+        await group_service.delete_notes(group_id)
+        await callback.message.edit_text(
+            f'Заметка в группе {group_name} удалена'
+        )
+    else:
+        await callback.message.edit_text(
+            f'В группе {group_name} заметки не найдено'
+        )
+    await callback.message.edit_reply_markup(reply_markup=kb)

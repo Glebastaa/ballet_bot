@@ -19,9 +19,17 @@ class EditGroup(StatesGroup):
     name = State()
 
 
+class AddIndiv(StatesGroup):
+    start_time = State()
+
+
 class AddStudent(StatesGroup):
     name = State()
 
 
 class EditStudent(StatesGroup):
     name = State()
+
+
+class AddNotes(StatesGroup):
+    notes = State()

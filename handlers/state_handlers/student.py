@@ -7,7 +7,6 @@ from aiogram.fsm.context import FSMContext
 from exceptions import EntityAlreadyExists
 from services.student import StudentService
 from utils.states import AddStudent, EditStudent
-from keyboards import inline
 
 
 router = Router()
@@ -15,24 +14,15 @@ student_service = StudentService()
 
 
 @router.message(AddStudent.name)
-async def step2_add_name_student(message: Message, state: FSMContext):
+async def step_add_name_student(message: Message, state: FSMContext):
     student_name = message.text
-    data = await state.get_data()
-    studio_name = data.get('studio_name')
-    studio_id = data.get('studio_id')
-    group_name = data.get('group_name')
-    group_id = data.get('group_id')
-    kb = inline.select_group_for_studio_kb(
-        group_name, group_id, studio_name, studio_id
-    )
 
     if re.match(r'^[а-яА-ЯёЁ0-9\s\-]+$', student_name):
         try:
             await student_service.add_student(student_name)
             await message.answer(
-                f'Ученик {student_name} успешно добавлен\n'
-                f'Выбрана группа {group_name}',
-                reply_markup=kb
+                f'Ученик {student_name} успешно добавлен',
+                reply_markup=None
             )
             await state.clear()
         except EntityAlreadyExists:

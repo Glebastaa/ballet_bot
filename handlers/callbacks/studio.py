@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from keyboards import inline, builders
 from services.studio import StudioService
 from services.group import GroupService
-from utils.states import AddGroup, EditStudio
+from utils.states import AddGroup, AddIndiv, EditStudio
 
 
 router = Router()
@@ -116,3 +116,40 @@ async def step2_add_student_to_group(
         f'которой будет заниматся {student_name}'
     )
     await callback.message.edit_reply_markup(reply_markup=kb)
+
+
+@router.callback_query(F.data.startswith('addIndiv'))
+async def step1_add_indiv(callback: CallbackQuery, state: FSMContext):
+    "TODO"
+    studio_name, studio_id = extract_data_from_callback(callback)
+    kb = await builders.select_weekdays('weekdayIndiv')
+
+    await state.update_data(studio_name=studio_name, studio_id=studio_id)
+    await callback.message.edit_text(
+        f'Выберите день, когда будет проходить занятие в студии {studio_name}'
+    )
+    await callback.message.edit_reply_markup(reply_markup=kb)
+
+
+@router.callback_query(F.data.startswith('listIndiv'))
+async def show_studio_indiv_lesson(callback: CallbackQuery, state: FSMContext):
+    "TODO"
+    studio_name, studio_id = extract_data_from_callback(callback)
+    indivs = await group_service.get_date_time_indivs_by_studio(studio_id)
+    await state.update_data(studio_name=studio_name, studio_id=studio_id)
+    if indivs:
+        kb = await builders.show_list_schedules_to_group(
+            'menuIndiv', schedules=indivs
+        )
+        await callback.message.edit_text(
+            f'Список индивов в студии {studio_name}:'
+        )
+        await callback.message.edit_reply_markup(reply_markup=kb)
+    else:
+        kb = await builders.select_weekdays('weekdayIndiv')
+        await state.update_data(studio_name=studio_name, studio_id=studio_id)
+        await callback.message.edit_text(
+            f'Увы, в студии {studio_name} еще нет индивидуальных занятий\n'
+            'Давайте ее создадим. Выберите день, когда будет проходить занятие'
+        )
+        await callback.message.edit_reply_markup(reply_markup=kb)

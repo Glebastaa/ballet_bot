@@ -2,7 +2,8 @@ from aiogram import F, Router
 from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 
-from exceptions import StudentAlreadyInGroupError
+from database.models import WeekDays
+from exceptions import IndivIsFull, StudentAlreadyInGroupError
 from keyboards import inline, builders
 from services.student import StudentService
 from services.group import GroupService
@@ -31,12 +32,24 @@ async def list_students(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith('editStudent'))
 async def edit_student(callback: CallbackQuery, state: FSMContext):
+    "TODO"
     student_name, student_id = extract_data_from_callback(callback)
 
     await state.update_data(student_name=student_name, student_id=student_id)
     await state.set_state(EditStudent.name)
     await callback.message.edit_text(
         f'Введите новое имя для ученика {student_name}'
+    )
+    await callback.message.edit_reply_markup(reply_markup=None)
+
+
+@router.callback_query(F.data.startswith('deleteStudent'))
+async def delete_student(callback: CallbackQuery):
+    student_name, student_id = extract_data_from_callback(callback)
+
+    await student_service.delete_student(student_id)
+    await callback.message.edit_text(
+        f'Ученик {student_name} удален'
     )
     await callback.message.edit_reply_markup(reply_markup=None)
 
@@ -98,3 +111,69 @@ async def step2_delete_student_to_group(
     )
     await callback.message.edit_reply_markup(reply_markup=kb)
     await state.clear()
+
+
+@router.callback_query(F.data.startswith('addStudentToIndiv'))
+async def add_student_to_indiv(callback: CallbackQuery, state: FSMContext):
+    "TODO"
+    student_name, student_id = extract_data_from_callback(callback)
+    data = await state.get_data()
+    group_id = data.get('group_id')
+    start_time = data.get('start_time')
+    start_date: WeekDays = data.get('start_date')
+    schedule_id = data.get('schedule_id')
+    studio_name = data.get('studio_name')
+    studio_id = data.get('studio_id')
+    kb = inline.select_schedule_to_studio_kb(
+            start_date, start_time, schedule_id,
+            studio_name, studio_id, group_id
+        )
+
+    try:
+        await student_service.add_student_to_group(
+            student_id, group_id, is_individual=True
+        )
+        await callback.message.edit_text(
+            f'Ученик {student_name} добавлен в индив\n'
+            f'Выбрано индивидуальное занятие в {start_date} : {start_time}'
+        )
+        await callback.message.edit_reply_markup(reply_markup=kb)
+        await state.clear()
+    except StudentAlreadyInGroupError:
+        await callback.message.edit_text(
+                f'Ученик {student_name} уже добавлен в индив\n'
+                f'Выбрано индивидуальное занятие в {start_date} : {start_time}'
+            )
+        await callback.message.edit_reply_markup(reply_markup=kb)
+    except IndivIsFull:
+        await callback.message.edit_text(
+            'В индиве превышен лимит учеников\n'
+            f'Выбрано индивидуальное занятие в {start_date} : {start_time}'
+        )
+        await callback.message.edit_reply_markup(reply_markup=kb)
+
+
+@router.callback_query(F.data.startswith('delStudentToIndiv2'))
+async def step2_delete_student_to_indiv(
+    callback: CallbackQuery,
+    state: FSMContext
+):
+    student_name, student_id = extract_data_from_callback(callback)
+    data = await state.get_data()
+    group_id = data.get('group_id')
+    start_time = data.get('start_time')
+    start_date: WeekDays = data.get('start_date')
+    schedule_id = data.get('schedule_id')
+    studio_name = data.get('studio_name')
+    studio_id = data.get('studio_id')
+    kb = inline.select_schedule_to_studio_kb(
+            start_date, start_time, schedule_id,
+            studio_name, studio_id, group_id
+        )
+
+    await student_service.delete_student_from_group(student_id, group_id)
+    await callback.message.edit_text(
+        f'Ученик {student_name} удален из индивидуального '
+        f'занятия в {start_date} : {start_time}'
+    )
+    await callback.message.edit_reply_markup(reply_markup=kb)

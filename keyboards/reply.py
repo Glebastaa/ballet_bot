@@ -4,12 +4,11 @@ main = ReplyKeyboardMarkup(
     keyboard=[
         [
             KeyboardButton(text="Добавить студию"),
-        ],
-        [
             KeyboardButton(text="Студии"),
         ],
         [
             KeyboardButton(text="Добавить ученика"),
+            KeyboardButton(text="Ученик"),
         ],
     ],
     resize_keyboard=True,

@@ -2,7 +2,7 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 
-from utils.states import AddGroup
+from utils.states import AddGroup, AddIndiv
 from database.models import WeekDays
 
 
@@ -16,6 +16,18 @@ async def step3_add_group(callback: CallbackQuery, state: FSMContext):
 
     await state.update_data(start_date=start_date)
     await state.set_state(AddGroup.start_time)
+    await callback.message.edit_text(
+        f'Введите время начала занятия в {start_date.value}'
+    )
+
+
+@router.callback_query(F.data.startswith('weekdayIndiv'))
+async def step2_add_indiv(callback: CallbackQuery, state: FSMContext):
+    "TODO"
+    start_date = WeekDays(callback.data.split('_')[1])
+
+    await state.update_data(start_date=start_date)
+    await state.set_state(AddIndiv.start_time)
     await callback.message.edit_text(
         f'Введите время начала занятия в {start_date.value}'
     )

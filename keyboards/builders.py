@@ -1,3 +1,4 @@
+from schemas.schedule import ScheduleSchema
 from services.studio import StudioService
 from services.group import GroupService
 from services.student import StudentService
@@ -43,6 +44,18 @@ async def show_list_groups_for_studio(
     )
 
 
+async def show_list_indiv_for_studio(
+    action: str,
+    studio_name: str,
+    studio_id: int,
+):
+    return await add_button_to_kb(
+        InlineKeyboardBuilder(),
+        await GroupService().get_groups(studio_id, is_individual=True),
+        action
+    )
+
+
 async def show_all_students(
     action: str
 ):
@@ -64,6 +77,21 @@ async def show_students_to_group(
         await StudentService().get_students_from_group(group_id),
         action
     )
+
+
+async def show_list_schedules_to_group(
+    action: str,
+    schedules: list[ScheduleSchema]
+):
+    keyboard = InlineKeyboardBuilder()
+    for schedule in schedules:
+        keyboard.add(InlineKeyboardButton(
+                text=f'{schedule.start_date.value} : {schedule.start_time}',
+                callback_data=f'{action}_{schedule.start_date.value}_'
+                              f'{schedule.start_time}_{schedule.id}_'
+                              f'{schedule.group_id}'
+        ))
+    return keyboard.adjust(2).as_markup()
 
 
 async def select_weekdays(action: str):
