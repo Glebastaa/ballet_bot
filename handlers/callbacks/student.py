@@ -2,12 +2,12 @@ from aiogram import F, Router
 from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 
+from keyboards import inline
 from database.models import WeekDays
-from exceptions import IndivIsFull, StudentAlreadyInGroupError
-from keyboards import inline, builders
-from services.student import StudentService
-from services.group import GroupService
 from utils.states import EditStudent
+from services.group import GroupService
+from services.student import StudentService
+from exceptions import IndivIsFull, StudentAlreadyInGroupError
 
 
 router = Router()
@@ -32,7 +32,6 @@ async def list_students(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith('editStudent'))
 async def edit_student(callback: CallbackQuery, state: FSMContext):
-    "TODO"
     student_name, student_id = extract_data_from_callback(callback)
 
     await state.update_data(student_name=student_name, student_id=student_id)
@@ -115,7 +114,6 @@ async def step2_delete_student_to_group(
 
 @router.callback_query(F.data.startswith('addStudentToIndiv'))
 async def add_student_to_indiv(callback: CallbackQuery, state: FSMContext):
-    "TODO"
     student_name, student_id = extract_data_from_callback(callback)
     data = await state.get_data()
     group_id = data.get('group_id')

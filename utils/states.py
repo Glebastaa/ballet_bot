@@ -33,3 +33,12 @@ class EditStudent(StatesGroup):
 
 class AddNotes(StatesGroup):
     notes = State()
+
+
+class RegUser(StatesGroup):
+    name = State()
+
+
+class AdminPass(StatesGroup):
+    password = State()
+    switch_role = State()

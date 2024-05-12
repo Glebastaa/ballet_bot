@@ -12,17 +12,20 @@ student_service = StudentService()
 group_service = GroupService()
 
 
-def extract_data_from_callback(callback: CallbackQuery, index1=1, index2=2):
+def extract_data_from_callback(
+    callback: CallbackQuery,
+    index1=1, index2=2, index3=3, index4=4
+):
     data = callback.data.split('_')
-    return data[index1], int(data[index2])
+    return data[index1], int(data[index2]), data[index3], int(data[index4])
 
 
 @router.callback_query(F.data.startswith('selectGroupByStudio'))
 async def show_group_menu(callback: CallbackQuery):
     "Group menu"
-    group_name, group_id = extract_data_from_callback(callback)
-    studio_name = callback.data.split('_')[3]
-    studio_id = callback.data.split('_')[4]
+    group_name, group_id, studio_name, studio_id = extract_data_from_callback(
+        callback
+    )
     kb = inline.select_group_for_studio_kb(
         group_name, group_id, studio_name, studio_id
     )
@@ -34,9 +37,9 @@ async def show_group_menu(callback: CallbackQuery):
 @router.callback_query(F.data.startswith('editGroup'))
 async def edit_group_name(callback: CallbackQuery, state: FSMContext):
     "Requesting a new group name"
-    group_name, group_id = extract_data_from_callback(callback)
-    studio_name = callback.data.split('_')[3]
-    studio_id = callback.data.split('_')[4]
+    group_name, group_id, studio_name, studio_id = extract_data_from_callback(
+        callback
+    )
     await state.update_data(
         group_name=group_name,
         group_id=group_id,
@@ -52,9 +55,9 @@ async def edit_group_name(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data.startswith('deleteGroup'))
 async def delete_group(callback: CallbackQuery):
-    group_name, group_id = extract_data_from_callback(callback)
-    studio_name = callback.data.split('_')[3]
-    studio_id = callback.data.split('_')[4]
+    group_name, group_id, studio_name, studio_id = extract_data_from_callback(
+        callback
+    )
     kb = inline.menu_studio_kb(studio_name, studio_id)
 
     await group_service.delete_group(group_id)
@@ -70,9 +73,9 @@ async def step1_add_student_to_group(
     state: FSMContext
 ):
     "Step 1. Add student to group"
-    group_name, group_id = extract_data_from_callback(callback)
-    studio_name = callback.data.split('_')[3]
-    studio_id: int = callback.data.split('_')[4]
+    group_name, group_id, studio_name, studio_id = extract_data_from_callback(
+        callback
+    )
     kb = await builders.show_all_students('addStudentToGroup')
     students = await student_service.get_all_students()
 
@@ -93,9 +96,9 @@ async def step1_add_student_to_group(
 
 @router.callback_query(F.data.startswith('showStudentToGroup'))
 async def show_list_students_to_group(callback: CallbackQuery):
-    group_name, group_id = extract_data_from_callback(callback)
-    studio_name = callback.data.split('_')[3]
-    studio_id: int = callback.data.split('_')[4]
+    group_name, group_id, studio_name, studio_id = extract_data_from_callback(
+        callback
+    )
     students = await student_service.get_students_from_group(group_id)
 
     if students:
@@ -119,9 +122,9 @@ async def show_list_students_to_group(callback: CallbackQuery):
 async def step1_delete_student_to_group(
     callback: CallbackQuery, state: FSMContext
 ):
-    group_name, group_id = extract_data_from_callback(callback)
-    studio_name = callback.data.split('_')[3]
-    studio_id: int = callback.data.split('_')[4]
+    group_name, group_id, studio_name, studio_id = extract_data_from_callback(
+        callback
+    )
     await state.update_data(
         group_name=group_name, group_id=group_id,
         studio_name=studio_name, studio_id=studio_id
@@ -150,9 +153,9 @@ async def step1_add_group_schedule(
     callback: CallbackQuery, state: FSMContext
 ):
     "Step 1. Add schedule to group"
-    group_name, group_id = extract_data_from_callback(callback)
-    studio_name = callback.data.split('_')[3]
-    studio_id: int = callback.data.split('_')[4]
+    group_name, group_id, studio_name, studio_id = extract_data_from_callback(
+        callback
+    )
     kb = await builders.select_weekdays('weekdayGroup')
 
     await state.update_data(
@@ -169,9 +172,9 @@ async def step1_add_group_schedule(
 @router.callback_query(F.data.startswith('showScheduleGroup'))
 async def show_group_schedule(callback: CallbackQuery):
     "Show group schedule"
-    group_name, group_id = extract_data_from_callback(callback)
-    studio_name = callback.data.split('_')[3]
-    studio_id: int = callback.data.split('_')[4]
+    group_name, group_id, studio_name, studio_id = extract_data_from_callback(
+        callback
+    )
     schedules = await group_service.get_date_time_group(group_id)
     if schedules:
         kb = inline.back_to_group_menu(
@@ -201,9 +204,9 @@ async def step1_delete_group_schedule(
     callback: CallbackQuery, state: FSMContext
 ):
     "delete schedule group"
-    group_name, group_id = extract_data_from_callback(callback)
-    studio_name = callback.data.split('_')[3]
-    studio_id: int = callback.data.split('_')[4]
+    group_name, group_id, studio_name, studio_id = extract_data_from_callback(
+        callback
+    )
     schedules = await group_service.get_date_time_group(group_id)
 
     await state.update_data(
@@ -232,10 +235,10 @@ async def step1_delete_group_schedule(
 async def step1_add_group_note(
     callback: CallbackQuery, state: FSMContext
 ):
-    "TODO"
-    group_name, group_id = extract_data_from_callback(callback)
-    studio_name = callback.data.split('_')[3]
-    studio_id: int = callback.data.split('_')[4]
+    "Step 1. Save data to state and request to enter a note"
+    group_name, group_id, studio_name, studio_id = extract_data_from_callback(
+        callback
+    )
 
     await state.update_data(
         group_name=group_name, group_id=group_id,
@@ -250,10 +253,10 @@ async def step1_add_group_note(
 
 @router.callback_query(F.data.startswith('showNotesToGroup'))
 async def show_group_note(callback: CallbackQuery):
-    "TODO"
-    group_name, group_id = extract_data_from_callback(callback)
-    studio_name = callback.data.split('_')[3]
-    studio_id: int = callback.data.split('_')[4]
+    "Show group note"
+    group_name, group_id, studio_name, studio_id = extract_data_from_callback(
+        callback
+    )
     note = await group_service.get_notes(group_id)
     if note:
         kb = inline.back_to_group_menu(
@@ -273,10 +276,10 @@ async def show_group_note(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith('deleteNotesGroup'))
 async def delete_group_note(callback: CallbackQuery):
-    "TODO"
-    group_name, group_id = extract_data_from_callback(callback)
-    studio_name = callback.data.split('_')[3]
-    studio_id: int = callback.data.split('_')[4]
+    "Delete group note"
+    group_name, group_id, studio_name, studio_id = extract_data_from_callback(
+        callback
+    )
     note = await group_service.get_notes(group_id)
     kb = inline.select_group_for_studio_kb(
             group_name, group_id, studio_name, studio_id

@@ -14,7 +14,8 @@ student_service = StudentService()
 
 
 @router.message(AddStudent.name)
-async def step_add_name_student(message: Message, state: FSMContext):
+async def add_name_student(message: Message, state: FSMContext):
+    "Check student name and add student"
     student_name = message.text
 
     if re.match(r'^[а-яА-ЯёЁ0-9\s\-]+$', student_name):
@@ -38,7 +39,8 @@ async def step_add_name_student(message: Message, state: FSMContext):
 
 
 @router.message(EditStudent.name)
-async def sted_edit_name_student(message: Message, state: FSMContext):
+async def step_edit_name_student(message: Message, state: FSMContext):
+    "Check student name and edit student"
     new_name = message.text
     data = await state.get_data()
     student_name = data.get('student_name')

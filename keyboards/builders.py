@@ -1,10 +1,12 @@
+from aiogram.types import InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+
 from schemas.schedule import ScheduleSchema
+from schemas.user import UserSchema
 from services.studio import StudioService
 from services.group import GroupService
 from services.student import StudentService
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.types import InlineKeyboardButton
-from database.models import WeekDays
+from database.models import UserRoles, WeekDays
 
 
 async def add_button_to_kb(
@@ -92,6 +94,28 @@ async def show_list_schedules_to_group(
                               f'{schedule.group_id}'
         ))
     return keyboard.adjust(2).as_markup()
+
+
+async def switch_to_role_kb(
+    action: str, user_name: str | None, user_id: int | None
+):
+    keyboard = InlineKeyboardBuilder()
+    for role in UserRoles:
+        keyboard.add(InlineKeyboardButton(
+            text=role.value,
+            callback_data=f'{action}_{role.value}_{user_name}_{user_id}'
+        ))
+    return keyboard.adjust(1).as_markup()
+
+
+async def show_users_for_role(users: list[UserSchema], role: str):
+    keyboard = InlineKeyboardBuilder()
+    for user in users:
+        keyboard.add(InlineKeyboardButton(
+            text=user.username,
+            callback_data=f'allUsersForRole_{user.username}_{user.id}'
+        ))
+    return keyboard.adjust(1).as_markup()
 
 
 async def select_weekdays(action: str):

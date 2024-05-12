@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from keyboards import inline, builders
 from services.studio import StudioService
 from services.group import GroupService
-from utils.states import AddGroup, AddIndiv, EditStudio
+from utils.states import AddGroup, EditStudio
 
 
 router = Router()
@@ -120,7 +120,7 @@ async def step2_add_student_to_group(
 
 @router.callback_query(F.data.startswith('addIndiv'))
 async def step1_add_indiv(callback: CallbackQuery, state: FSMContext):
-    "TODO"
+    "Step 1. Save data to state and select weekday for in indiv"
     studio_name, studio_id = extract_data_from_callback(callback)
     kb = await builders.select_weekdays('weekdayIndiv')
 
@@ -133,7 +133,7 @@ async def step1_add_indiv(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data.startswith('listIndiv'))
 async def show_studio_indiv_lesson(callback: CallbackQuery, state: FSMContext):
-    "TODO"
+    "Show individual lessons for studio"
     studio_name, studio_id = extract_data_from_callback(callback)
     indivs = await group_service.get_date_time_indivs_by_studio(studio_id)
     await state.update_data(studio_name=studio_name, studio_id=studio_id)

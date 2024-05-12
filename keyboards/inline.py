@@ -44,42 +44,27 @@ def menu_studio_kb(studio_name: str, studio_id: int) -> InlineKeyboardMarkup:
     return kb
 
 
-def select_schedule_to_studio_kb(
-    start_date: str,
-    start_time: str,
-    schedule_id: int,
-    studio_name: str,
-    studio_id: int,
-    group_id: int
-) -> InlineKeyboardMarkup:
+def select_schedule_to_studio_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
                     text='Добавить ученика',
-                    callback_data=f'selectStudentToIndiv_{start_date}_'
-                                  f'{start_time}_{schedule_id}_{studio_name}'
-                                  f'_{studio_id}_{group_id}'
+                    callback_data='selectStudentToIndiv'
                 ),
                 InlineKeyboardButton(
                     text='Посмотреть учеников',
-                    callback_data=f'showStudentsToIndiv_{start_date}_'
-                                  f'{start_time}_{schedule_id}_{studio_name}'
-                                  f'_{studio_id}_{group_id}'
+                    callback_data='showStudentsToIndiv'
                 )
             ],
             [
                 InlineKeyboardButton(
                     text='Удалить ученика',
-                    callback_data=f'delStudentToIndiv_{start_date}_'
-                                  f'{start_time}_{schedule_id}_{studio_name}'
-                                  f'_{studio_id}_{group_id}'
+                    callback_data='delStudentToIndiv'
                 ),
                 InlineKeyboardButton(
                     text='Удалить индив',
-                    callback_data=f'deleteIndiv_{start_date}_{start_time}_'
-                                  f'{schedule_id}_{studio_name}_'
-                                  f'{studio_id}_{group_id}'
+                    callback_data='deleteIndiv'
                 ),
             ],
         ],
@@ -112,8 +97,8 @@ def select_group_for_studio_kb(
             [
                 InlineKeyboardButton(
                     text='Занятие: Удалить',
-                    callback_data=f'deleteScheduleGroup_{group_name}_{group_id}_'
-                                  f'{studio_name}_{studio_id}'
+                    callback_data=f'deleteScheduleGroup_{group_name}_'
+                                  f'{group_id}_{studio_name}_{studio_id}'
                 ),
             ],
             [
@@ -211,8 +196,8 @@ def back_to_group_menu(
             [
                 InlineKeyboardButton(
                     text='Вернутся назад',
-                    callback_data=f'selectGroupByStudio_{group_name}_{group_id}_'
-                                  f'{studio_name}_{studio_id}'
+                    callback_data=f'selectGroupByStudio_{group_name}_'
+                                  f'{group_id}_{studio_name}_{studio_id}'
                 ),
             ],
         ],
@@ -233,6 +218,66 @@ def back_to_indiv_menu(
                     text='Вернутся назад',
                     callback_data=f'menuIndiv_{start_date}_{start_time}_'
                                   f'{schedule_id}_{group_id}'
+                ),
+            ],
+        ],
+    )
+    return kb
+
+
+def show_admin_menu_kb() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text='Выдать роль пользователю',
+                    callback_data='changeRole'
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text='Увидеть всех пользователей с ролью',
+                    callback_data='showUsersRole'
+                )
+            ],
+        ]
+    )
+    return kb
+
+
+def show_users_role_kb() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text='Показать всех Владельцев',
+                    callback_data='showRole_owner'
+                ),
+            ],
+            [
+                InlineKeyboardButton(
+                    text='Показать всех Учителей',
+                    callback_data='showRole_teacher'
+                ),
+            ],
+            [
+                InlineKeyboardButton(
+                    text='Показать всех Учеников',
+                    callback_data='showRole_student'
+                ),
+            ],
+        ],
+    )
+    return kb
+
+
+def show_user_menu_kb(user_name: str, user_id: int) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text='Изменить роль',
+                    callback_data=f'switchRole_{user_name}_{user_id}'
                 ),
             ],
         ],

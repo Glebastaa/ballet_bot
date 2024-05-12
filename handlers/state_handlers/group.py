@@ -1,7 +1,7 @@
-from datetime import datetime, time
 import random
 import re
 import string
+from datetime import datetime
 
 from aiogram import Router
 from aiogram.types import Message
@@ -10,10 +10,10 @@ from aiogram.fsm.context import FSMContext
 from database.models import WeekDays
 from handlers.commands import add_main
 from schemas.group import GroupSchema
+from keyboards import builders, inline
 from services.group import GroupService
 from exceptions import EntityAlreadyExists, ScheduleTimeInsertionError
 from utils.states import AddGroup, AddIndiv, AddNotes, EditGroup
-from keyboards import builders, inline
 
 
 router = Router()
@@ -141,6 +141,7 @@ async def step4_add_group(message: Message, state: FSMContext):
 
 @router.message(EditGroup.name)
 async def edit_group_name(message: Message, state: FSMContext):
+    "Check new name and edit group name"
     new_group_name = message.text
     data = await state.get_data()
     group_name = data.get('group_name')
@@ -174,7 +175,7 @@ async def edit_group_name(message: Message, state: FSMContext):
 
 @router.message(AddIndiv.start_time)
 async def step3_add_indiv(message: Message, state: FSMContext):
-    "TODO"
+    "Step 3. Checking the start of the indiv and creating an indiv"
     start_time_str = str(message.text)
     data = await state.get_data()
     studio_name: str = data.get('studio_name')
@@ -184,7 +185,7 @@ async def step3_add_indiv(message: Message, state: FSMContext):
 
     if start_time_str == '/main':
         return await add_main(message)
-    
+
     try:
         group = await group_service.add_group(
             group_name=''.join(random.choices(string.ascii_lowercase, k=15)),
@@ -224,6 +225,7 @@ async def step3_add_indiv(message: Message, state: FSMContext):
 
 @router.message(AddNotes.notes)
 async def step2_add_group_notes(message: Message, state: FSMContext):
+    "Step 2. Add notes to group"
     notes = message.text
     data = await state.get_data()
     group_name = data.get('group_name')

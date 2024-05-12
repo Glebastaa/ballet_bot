@@ -47,12 +47,11 @@ async def menu_indiv(
     start_time = callback.data.split('_')[2]
     schedule_id = int(callback.data.split('_')[3])
     group_id = int(callback.data.split('_')[4])
-    data = await state.get_data()
-    studio_name = data.get('studio_name')
-    studio_id = data.get('studio_id')
-    kb = inline.select_schedule_to_studio_kb(
-        start_date, start_time, schedule_id, studio_name, studio_id, group_id
+    await state.update_data(
+        start_date=start_date, start_time=start_time,
+        schedule_id=schedule_id, group_id=group_id
     )
+    kb = inline.select_schedule_to_studio_kb()
 
     await callback.message.edit_text(
         f'Выбрано индивидаульное занятие в {start_date} : {start_time}\n'
@@ -62,12 +61,13 @@ async def menu_indiv(
 
 
 @router.callback_query(F.data.startswith('deleteIndiv'))
-async def delete_indiv(callback: CallbackQuery):
-    start_date = callback.data.split('_')[1]
-    start_time = callback.data.split('_')[2]
-    studio_name = callback.data.split('_')[4]
-    studio_id = callback.data.split('_')[5]
-    group_id = int(callback.data.split('_')[6])
+async def delete_indiv(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    start_date = data.get('start_date')
+    start_time = data.get('start_time')
+    studio_name = data.get('studio_name')
+    studio_id = data.get('studio_id')
+    group_id = int(data.get('group_id'))
     kb = inline.menu_studio_kb(studio_name, studio_id)
 
     await group_service.delete_group(group_id)
@@ -81,12 +81,13 @@ async def delete_indiv(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith('selectStudentToIndiv'))
 async def add_student_to_indiv(callback: CallbackQuery, state: FSMContext):
-    start_date = callback.data.split('_')[1]
-    start_time = callback.data.split('_')[2]
-    schedule_id = int(callback.data.split('_')[3])
-    studio_name = callback.data.split('_')[4]
-    studio_id = int(callback.data.split('_')[5])
-    group_id = int(callback.data.split('_')[6])
+    data = await state.get_data()
+    start_date = data.get('start_date')
+    start_time = data.get('start_time')
+    schedule_id = int(data.get('schedule_id'))
+    studio_name = data.get('studio_name')
+    studio_id = int(data.get('studio_id'))
+    group_id = int(data.get('group_id'))
     kb = await builders.show_all_students('addStudentToIndiv')
 
     await state.update_data(
@@ -101,13 +102,14 @@ async def add_student_to_indiv(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith('showStudentsToIndiv'))
-async def show_student_to_indiv(callback: CallbackQuery):
-    start_date = callback.data.split('_')[1]
-    start_time = callback.data.split('_')[2]
-    schedule_id = int(callback.data.split('_')[3])
-    studio_name = callback.data.split('_')[4]
-    studio_id = int(callback.data.split('_')[5])
-    group_id = int(callback.data.split('_')[6])
+async def show_student_to_indiv(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    start_date = data.get('start_date')
+    start_time = data.get('start_time')
+    schedule_id = int(data.get('schedule_id'))
+    studio_name = data.get('studio_name')
+    studio_id = int(data.get('studio_id'))
+    group_id = int(data.get('group_id'))
     students = await student_service.get_students_from_group(group_id)
     if students:
         kb = inline.back_to_indiv_menu(
@@ -135,12 +137,13 @@ async def step1_delete_student_to_indiv(
     callback: CallbackQuery,
     state: FSMContext
 ):
-    start_date = callback.data.split('_')[1]
-    start_time = callback.data.split('_')[2]
-    schedule_id = int(callback.data.split('_')[3])
-    studio_name = callback.data.split('_')[4]
-    studio_id = int(callback.data.split('_')[5])
-    group_id = int(callback.data.split('_')[6])
+    data = await state.get_data()
+    start_date = data.get('start_date')
+    start_time = data.get('start_time')
+    schedule_id = int(data.get('schedule_id'))
+    studio_name = data.get('studio_name')
+    studio_id = int(data.get('studio_id'))
+    group_id = int(data.get('group_id'))
     kb = await builders.show_students_to_group('delStudentToIndiv2', group_id)
 
     await state.update_data(
